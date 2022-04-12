@@ -67,9 +67,15 @@ const Calendar = () => {
     return listOfDays
   }
 
-  function updateEvent(event: EventData) {
-    axios.put(`${baseUrl}/event`, event)
-      .then((r) => console.log('updated event'))
+
+  async function updateEvent(event: EventData) {
+    await axios.put(`${baseUrl}/event`, event)
+      .then(() => console.log('updated event'))
+  }
+
+  async function deleteEvent(eventId: number) {
+    await axios.delete(`${baseUrl}/event/${eventId}`)
+      .then(() => console.log('deleted event'))
   }
 
 
@@ -80,8 +86,8 @@ const Calendar = () => {
 
   const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({year: today.getFullYear(), month: today.getMonth()})
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5)
-  const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(Array(7 * calendarRowsNum).fill([]))
-  const [userData, setUserData] = useState<UserData[]>([])
+  const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(Array(7 * calendarRowsNum).fill([]) as EventData[][])
+  const [userData, setUserData] = useState<UserData[]>([] as UserData[])
 
   // ユーザー情報取得
   useEffect(() => {
@@ -166,7 +172,7 @@ const Calendar = () => {
               <FormLabel>ユーザー</FormLabel>
               <Select
                 onChange={(e) => {setUser(e.target.value)}}
-                defaultValue={userData.filter((e) => (e.id === event['user_id']))[0]['name']}
+                defaultValue={userData.filter((e) => (e['id'] === event['user_id']))[0]['name']}
               >
                 {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
               </Select>
@@ -216,7 +222,7 @@ const Calendar = () => {
               <Button
                 colorScheme={'blue'}
                 mr={3}
-                onClick={() => {
+                onClick={async () => {
                   const start_datetime = date + 'T' + time
                   const user_id = userData.filter((e) => (e.name == user))[0].id
                   const newData: EventData = {
@@ -226,13 +232,29 @@ const Calendar = () => {
                     is_timed: isTimed,
                     user_id: user_id,
                   }
-                  console.log('OMG!!!!!!!!!!!!!', newData)
-                  updateEvent(newData)
+                  await updateEvent(newData)
+                  const newCalendarEvents = calendarEvents
+                    .map((eventsOneDay: EventData[]) => eventsOneDay
+                      .map((e: EventData) => {
+                        return (e['id'] === event['id'])
+                          ? newData
+                          : e
+                      }))
+                  setCalendarEvents(newCalendarEvents)
                 }}
               >
                 更新
               </Button>
-              <Button colorScheme={'red'}>
+              <Button
+                colorScheme={'red'}
+                onClick={async () => {
+                  await deleteEvent(event['id'])
+                  const newCalendarEvents = calendarEvents
+                    .map((eventsOneDay: EventData[]) => eventsOneDay
+                      .filter((e: EventData) => e['id'] !== event['id']))
+                  setCalendarEvents(newCalendarEvents)
+                }}
+              >
                 削除
               </Button>
             </PopoverFooter>
