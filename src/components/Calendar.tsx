@@ -48,11 +48,29 @@ const Calendar = () => {
     is_timed: boolean,
   }
 
+  interface NewEventData {
+    content: string,
+    user_id: number,
+    start_datetime: string,
+    is_timed: boolean,
+  }
+
   interface UserData {
     id: number,
     name: string,
     color: string,
   }
+
+
+  const baseUrl = 'http://localhost:8000'
+
+  const today = new Date()
+  const weekName = ["日", "月", "火", "水", "木", "金", "土"]
+
+  const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({year: today.getFullYear(), month: today.getMonth()})
+  const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5)
+  const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(Array(7 * calendarRowsNum).fill([]) as EventData[][])
+  const [userData, setUserData] = useState<UserData[]>([] as UserData[])
 
 
   function getFirstSquareOfCalendar(today: Date) {
@@ -67,6 +85,14 @@ const Calendar = () => {
     return listOfDays
   }
 
+  function loadEvents() {
+    const calendarFirstDay = getFirstSquareOfCalendar(new Date(calendarMonth.year, calendarMonth.month, 1))
+    axios(`${baseUrl}/event/${calendarFirstDay.getFullYear()}/${calendarFirstDay.getMonth() + 1}/${calendarFirstDay.getDate()}`, {
+      params: {days: 7 * calendarRowsNum}
+    })
+      .then((r) => r.data)
+      .then((r) => setCalendarEvents(r['events']))
+  }
 
   async function updateEvent(event: EventData) {
     await axios.put(`${baseUrl}/event`, event)
@@ -78,16 +104,10 @@ const Calendar = () => {
       .then(() => console.log('deleted event'))
   }
 
-
-  const baseUrl = 'http://localhost:8000'
-
-  const today = new Date()
-  const weekName = ["日", "月", "火", "水", "木", "金", "土"]
-
-  const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({year: today.getFullYear(), month: today.getMonth()})
-  const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5)
-  const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(Array(7 * calendarRowsNum).fill([]) as EventData[][])
-  const [userData, setUserData] = useState<UserData[]>([] as UserData[])
+  async function addEvent(event: NewEventData) {
+    await axios.post(`${baseUrl}/event`, event)
+    .then(() => console.log('added event'))
+  }
 
   // ユーザー情報取得
   useEffect(() => {
@@ -100,16 +120,7 @@ const Calendar = () => {
 
   // イベント情報取得
   useEffect(() => {
-    const calendarFirstDay = getFirstSquareOfCalendar(new Date(calendarMonth.year, calendarMonth.month, 1))
-    axios(`${baseUrl}/event/${calendarFirstDay.getFullYear()}/${calendarFirstDay.getMonth() + 1}/${calendarFirstDay.getDate()}`, {
-      params: {
-        days: 7 * calendarRowsNum
-      }
-    })
-      .then((r) => r.data)
-      .then((r) => {
-        setCalendarEvents(r['events'])
-      })
+    loadEvents()
     return () => {}
   }, [calendarMonth, calendarRowsNum])
 
@@ -138,6 +149,25 @@ const Calendar = () => {
     const [user, setUser] = useState<string>(userData.filter((e) => e.id === event['user_id'])[0]['name'])
     const [content, setContent] = useState<string>(event['content'])
     const [isTimed, setIsTimed] = useState<boolean>(event['is_timed'])
+
+    const updateButton = async () => {
+      const start_datetime = date + 'T' + time
+      const user_id = userData.filter((e) => (e.name === user))[0]['id']
+      const newData: EventData = {
+        id: event.id,
+        start_datetime: start_datetime,
+        content: content,
+        is_timed: isTimed,
+        user_id: user_id,
+      }
+      await updateEvent(newData)
+      loadEvents()
+    }
+
+    const deleteButton = async () => {
+      await deleteEvent(event['id'])
+      loadEvents()
+    }
     
     return (
       <Popover
@@ -222,38 +252,13 @@ const Calendar = () => {
               <Button
                 colorScheme={'blue'}
                 mr={3}
-                onClick={async () => {
-                  const start_datetime = date + 'T' + time
-                  const user_id = userData.filter((e) => (e.name == user))[0].id
-                  const newData: EventData = {
-                    id: event.id,
-                    start_datetime: start_datetime,
-                    content: content,
-                    is_timed: isTimed,
-                    user_id: user_id,
-                  }
-                  await updateEvent(newData)
-                  const newCalendarEvents = calendarEvents
-                    .map((eventsOneDay: EventData[]) => eventsOneDay
-                      .map((e: EventData) => {
-                        return (e['id'] === event['id'])
-                          ? newData
-                          : e
-                      }))
-                  setCalendarEvents(newCalendarEvents)
-                }}
+                onClick={updateButton}
               >
                 更新
               </Button>
               <Button
                 colorScheme={'red'}
-                onClick={async () => {
-                  await deleteEvent(event['id'])
-                  const newCalendarEvents = calendarEvents
-                    .map((eventsOneDay: EventData[]) => eventsOneDay
-                      .filter((e: EventData) => e['id'] !== event['id']))
-                  setCalendarEvents(newCalendarEvents)
-                }}
+                onClick={deleteButton}
               >
                 削除
               </Button>
@@ -298,7 +303,7 @@ const Calendar = () => {
           key={i}
         >
         {Array(7).fill(0).map((_, j) =>
-          // calendar square
+          // calendar cell
           <Flex
             grow={1}
             basis={1}
@@ -326,14 +331,113 @@ const Calendar = () => {
     )
   }
 
+  const EventAddButton = () => {
 
-  const CalendarNavBar = () => {
+    const firstFieldRef = useRef(null)
+    const [date, setDate] = useState<string>('')
+    const [time, setTime] = useState<string>('')
+    const [user, setUser] = useState<string>('')
+    const [content, setContent] = useState<string>('')
+    const [isTimed, setIsTimed] = useState<boolean>(true)
+
+    const addButton = async () => {
+      const start_datetime = date + 'T' + time
+      const user_id = userData.filter((e) => (e.name === user))[0]['id']
+      const newData: NewEventData = {
+        start_datetime: start_datetime,
+        content: content,
+        is_timed: isTimed,
+        user_id: user_id,
+      }
+      await addEvent(newData)
+      loadEvents()
+    }
+    
+    return (
+      <Popover
+        placement='right'
+        initialFocusRef={firstFieldRef}
+      >
+        <PopoverTrigger>
+          <Button>イベントを追加</Button>
+        </PopoverTrigger>
+
+        <Portal>
+          <PopoverContent>
+            <PopoverArrow />
+            <PopoverHeader>イベント編集</PopoverHeader>
+            <PopoverCloseButton />
+            <PopoverBody>
+            <FormControl pb={6}>
+              <FormLabel>ユーザー</FormLabel>
+              <Select
+                onChange={(e) => setUser(e.target.value)}
+              >
+                <option hidden>ユーザーを選択してください</option>
+                {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
+              </Select>
+            </FormControl>
+            <Box pb={6}>
+              <Box pb={1}>
+                <label htmlFor="changeform-datepicker">日付</label>
+              </Box>
+              <Box>
+                <input
+                  id='changeform-datepicker'
+                  type='date'
+                  onChange={(e) => {setDate(e.target.value)}}
+                ></input>
+              </Box>
+            </Box>
+            <Box pb={6}>
+              <Box pb={1}>
+                <label htmlFor="changeform-timepicker">時間</label>
+              </Box>
+              <Box>
+                <input
+                  id='changeform-timepicker'
+                  type='time'
+                  onChange={(e) => {setTime(e.target.value)}}
+                ></input>
+              </Box>
+            </Box>
+            <Box pb={6}>
+              <Checkbox
+                defaultChecked={true}
+                onChange={(e) => {setIsTimed(e.target.checked)}}
+              >時間表示</Checkbox>
+            </Box>
+            <FormControl>
+              <FormLabel>イベント内容</FormLabel>
+              <Input
+                ref={firstFieldRef}
+                onChange={(e) => {setContent(e.target.value)}}
+              />
+            </FormControl>
+            </PopoverBody>
+            <PopoverFooter>
+              <Button
+                colorScheme={'blue'}
+                mr={3}
+                onClick={addButton}
+              >
+                追加
+              </Button>
+            </PopoverFooter>
+          </PopoverContent>
+        </Portal>
+      </Popover>
+    )
+  }
+
+
+  const CalendarNavbar = () => {
     return (
       <Flex h='50px' alignItems={'center'} justifyContent={'space-between'}>
-        <Box p='2'>
-          <Heading size='md'>CalendarApp</Heading>
-        </Box>
         <HStack spacing={8}>
+          <Box pl={4}>
+            <Heading size='md'>CalendarApp</Heading>
+          </Box>
           <ButtonGroup variant='outline' spacing='3'>
             <IconButton
               onClick={setPrevCalendarMonth}
@@ -347,6 +451,8 @@ const Calendar = () => {
             />
           </ButtonGroup>
           <Text fontSize='3xl'>{calendarMonth.year}年{calendarMonth.month + 1}月</Text>
+          
+          <EventAddButton />
         </HStack>
         <Spacer />
       </Flex>
@@ -355,7 +461,7 @@ const Calendar = () => {
 
   return (
     <>
-      <CalendarNavBar />
+      <CalendarNavbar />
       <CalendarTable />
     </>
   )
