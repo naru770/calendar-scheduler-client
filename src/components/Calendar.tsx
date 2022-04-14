@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Button,
   ButtonGroup,
@@ -25,12 +25,14 @@ import {
   PopoverCloseButton,
   Checkbox
 } from '@chakra-ui/react'
-import axios from 'axios'
-
 import {
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  SettingsIcon,
+  AddIcon
 } from '@chakra-ui/icons'
+import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 
 const Calendar = () => {
@@ -61,7 +63,7 @@ const Calendar = () => {
     color: string,
   }
 
-
+  const navbarHeight = 60
   const baseUrl = 'http://localhost:8000'
 
   const today = new Date()
@@ -71,6 +73,7 @@ const Calendar = () => {
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5)
   const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(Array(7 * calendarRowsNum).fill([]) as EventData[][])
   const [userData, setUserData] = useState<UserData[]>([] as UserData[])
+  const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight)
 
 
   function getFirstSquareOfCalendar(today: Date) {
@@ -96,32 +99,30 @@ const Calendar = () => {
 
   async function updateEvent(event: EventData) {
     await axios.put(`${baseUrl}/event`, event)
-      .then(() => console.log('updated event'))
   }
 
   async function deleteEvent(eventId: number) {
     await axios.delete(`${baseUrl}/event/${eventId}`)
-      .then(() => console.log('deleted event'))
   }
 
   async function addEvent(event: NewEventData) {
     await axios.post(`${baseUrl}/event`, event)
-    .then(() => console.log('added event'))
   }
+
+  useEffect(() => {
+    window.onresize = () => setInnerHeight(window.innerHeight)
+  }, [])
 
   // ユーザー情報取得
   useEffect(() => {
     axios(`${baseUrl}/user`)
       .then((r) => r.data)
-      .then((r) => {
-        setUserData(r['users'])
-      })
+      .then((r) => setUserData(r['users']))
   }, [])
 
   // イベント情報取得
   useEffect(() => {
     loadEvents()
-    return () => {}
   }, [calendarMonth, calendarRowsNum])
 
   const setNextCalnedarMonth = () => {
@@ -299,7 +300,7 @@ const Calendar = () => {
       {Array(calendarRowsNum).fill(0).map((_, i) =>
         // calendar row
         <Flex
-          h={Math.floor((window.innerHeight - 50 - 20) / calendarRowsNum) + 'px'}
+          h={Math.floor((innerHeight - navbarHeight - 20) / calendarRowsNum) + 'px'}
           key={i}
         >
         {Array(7).fill(0).map((_, j) =>
@@ -333,20 +334,39 @@ const Calendar = () => {
 
   const EventAddButton = () => {
 
+    interface Form {
+      date: string,
+      time: string,
+      user: string,
+      content: string,
+      is_timed: boolean,
+    }
+
     const firstFieldRef = useRef(null)
-    const [date, setDate] = useState<string>('')
-    const [time, setTime] = useState<string>('')
-    const [user, setUser] = useState<string>('')
-    const [content, setContent] = useState<string>('')
-    const [isTimed, setIsTimed] = useState<boolean>(true)
+
+    const [form, setForm] = useState<Form>({
+      date: '',
+      time: '00:00',
+      user: '',
+      content: '',
+      is_timed: true,
+    })
+
+    const isReadyToSubmit = (): boolean => {
+      return (
+        form.user !== '' &&
+        form.date !== '' &&
+        form.content !== ''
+      )
+    }
 
     const addButton = async () => {
-      const start_datetime = date + 'T' + time
-      const user_id = userData.filter((e) => (e.name === user))[0]['id']
+      const start_datetime = form.date + 'T' + form.time
+      const user_id = userData.filter((e) => (e.name === form.user))[0]['id']
       const newData: NewEventData = {
         start_datetime: start_datetime,
-        content: content,
-        is_timed: isTimed,
+        content: form.content,
+        is_timed: form.is_timed,
         user_id: user_id,
       }
       await addEvent(newData)
@@ -355,11 +375,15 @@ const Calendar = () => {
     
     return (
       <Popover
-        placement='right'
+        placement='bottom'
         initialFocusRef={firstFieldRef}
       >
         <PopoverTrigger>
-          <Button>イベントを追加</Button>
+          <Button
+            leftIcon={<AddIcon />}
+            colorScheme='teal'
+            variant='solid'
+          >イベントを追加</Button>
         </PopoverTrigger>
 
         <Portal>
@@ -371,7 +395,7 @@ const Calendar = () => {
             <FormControl pb={6}>
               <FormLabel>ユーザー</FormLabel>
               <Select
-                onChange={(e) => setUser(e.target.value)}
+                onChange={(e) => setForm({...form, user: e.target.value})}
               >
                 <option hidden>ユーザーを選択してください</option>
                 {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
@@ -385,7 +409,7 @@ const Calendar = () => {
                 <input
                   id='changeform-datepicker'
                   type='date'
-                  onChange={(e) => {setDate(e.target.value)}}
+                  onChange={(e) => setForm({...form, date: e.target.value})}
                 ></input>
               </Box>
             </Box>
@@ -397,21 +421,22 @@ const Calendar = () => {
                 <input
                   id='changeform-timepicker'
                   type='time'
-                  onChange={(e) => {setTime(e.target.value)}}
+                  defaultValue={form.time}
+                  onChange={(e) => setForm({...form, time: e.target.value})}
                 ></input>
               </Box>
             </Box>
             <Box pb={6}>
               <Checkbox
-                defaultChecked={true}
-                onChange={(e) => {setIsTimed(e.target.checked)}}
+                defaultChecked={false}
+                onChange={(e) => setForm({...form, is_timed: e.target.checked})}
               >時間表示</Checkbox>
             </Box>
             <FormControl>
               <FormLabel>イベント内容</FormLabel>
               <Input
                 ref={firstFieldRef}
-                onChange={(e) => {setContent(e.target.value)}}
+                onChange={(e) => setForm({...form, content: e.target.value})}
               />
             </FormControl>
             </PopoverBody>
@@ -420,6 +445,7 @@ const Calendar = () => {
                 colorScheme={'blue'}
                 mr={3}
                 onClick={addButton}
+                disabled={!isReadyToSubmit()}
               >
                 追加
               </Button>
@@ -433,28 +459,57 @@ const Calendar = () => {
 
   const CalendarNavbar = () => {
     return (
-      <Flex h='50px' alignItems={'center'} justifyContent={'space-between'}>
+      <Flex
+        h={navbarHeight + 'px'}
+        alignItems={'center'}
+        justifyContent={'space-between'}
+        backgroundColor='#f9f9f9'
+      >
         <HStack spacing={8}>
           <Box pl={4}>
             <Heading size='md'>CalendarApp</Heading>
           </Box>
+          
+        </HStack>
+
+        <Spacer />
+
+        <HStack spacing={8}>
           <ButtonGroup variant='outline' spacing='3'>
             <IconButton
               onClick={setPrevCalendarMonth}
               icon={<ChevronLeftIcon />}
+              colorScheme='blue'
               aria-label='go to previous month'
             />
             <IconButton
               onClick={setNextCalnedarMonth}
               icon={<ChevronRightIcon />}
+              colorScheme='blue'
               aria-label='go to next month'
             />
           </ButtonGroup>
-          <Text fontSize='3xl'>{calendarMonth.year}年{calendarMonth.month + 1}月</Text>
-          
+          <Text fontSize='3xl' >{calendarMonth.year} 年 {calendarMonth.month + 1} 月</Text>
+
           <EventAddButton />
         </HStack>
+
         <Spacer />
+
+        <HStack spacing={8} pr={4}>
+
+        <Link to='/setting'>
+          <Button
+            leftIcon={<SettingsIcon />}
+            colorScheme='blue'
+            variant='outline'
+          >
+            設定
+          </Button>
+        </Link>
+
+        </HStack>
+
       </Flex>
     )
   }
