@@ -377,7 +377,7 @@ const Calendar = () => {
             leftIcon={<AddIcon />}
             colorScheme='teal'
             variant='solid'
-          >Add Event</Button>
+          >New Event</Button>
         </PopoverTrigger>
 
         <Portal>

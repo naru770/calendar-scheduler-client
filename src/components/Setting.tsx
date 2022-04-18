@@ -31,6 +31,7 @@ import {
   AlertDialogFooter,
   Spacer,
   HStack,
+  Container,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import {
@@ -40,7 +41,8 @@ import {
 import {
   deleteUserData,
   getUserData,
-  updateUserData
+  addUserData,
+  updateUserData,
 } from './API'
 import {
   UserData,
@@ -51,11 +53,11 @@ import { CalendarNavbar } from './CalendarNavbar'
 const Setting = () => {
 
   const [userData, setUserData] = useState<UserData[]>([] as UserData[])
-  const [newUserData, setNewUserData] = useState<UserData>({id: -1, name: '', color: ''})
+  const [newUserData, setNewUserData] = useState<NewUserData>({name: '', color: ''})
+  const signupForm = useDisclosure()
   const [openAlertId, setOpenAlertId] = useState<number>(-1)  // 削除警告を開いているユーザID
   const [openEditModalId, setOpenEditModalId] = useState<number>(-1)  // 編集フォームを開いているユーザID
   const [updatedUserData, setUpdatedUserData] = useState<UserData>({id: -1, name: '', color: ''})
-  const RegisterForm = useDisclosure()
 
   const onOpenAlert = (id: number) => setOpenAlertId(id)
   const onCloseAlert = () => setOpenAlertId(-1)
@@ -68,10 +70,6 @@ const Setting = () => {
     getUserData().then((r) => setUserData(r))
   }
 
-  const addUserData = (newUserData: NewUserData) => {
-    addUserData(newUserData)
-  }
-
   useEffect(() => {
     loadUserData()
   }, [])
@@ -81,16 +79,57 @@ const Setting = () => {
       <CalendarNavbar>
         <HStack spacing={8} pr={4}>
           <Spacer />
-          <Button colorScheme='teal' leftIcon={<AddIcon />}>New User</Button>
+          <Button colorScheme='teal' leftIcon={<AddIcon />} onClick={signupForm.onOpen}>New User</Button>
+
+          <Modal
+            isOpen={signupForm.isOpen}
+            onClose={signupForm.onClose}
+          >
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>Register Form</ModalHeader>
+              <ModalCloseButton />
+              <ModalBody>
+                <FormControl pb='6'>
+                  <FormLabel>Username</FormLabel>
+                  <Input onChange={
+                    (e) => {
+                      setNewUserData({...newUserData, name: e.target.value})
+                  }} />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Color</FormLabel>
+                  <Input onChange={
+                    (e) => {
+                      setNewUserData({...newUserData, color: e.target.value})
+                  }} />
+                </FormControl>
+              </ModalBody>
+
+              <ModalFooter>
+                <ButtonGroup>
+                  <Button colorScheme='blue' onClick={() => {
+                    addUserData(newUserData)
+                      .then((e) => {
+                        loadUserData()
+                        signupForm.onClose()
+                      })
+                  }}>Register</Button>
+                  <Button onClick={signupForm.onClose}>Cancel</Button>
+                </ButtonGroup>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+
           <Link to='/'>
             <Button colorScheme='blue' variant='outline' leftIcon={<CalendarIcon />}>Calendar</Button>
           </Link>
         </HStack>
       </CalendarNavbar>
 
-      <Center>
-        <Box w='50em' p={4}>
-          <Box pt='2' pb='8'>
+      <Container maxW='container.md'>
+          <Box pt='8' pb='8'>
             <Heading color='blue.800'>User Administration</Heading>
           </Box>
           <TableContainer>
@@ -178,8 +217,6 @@ const Setting = () => {
                             <AlertDialogHeader>Warning</AlertDialogHeader>
 
                             <AlertDialogBody>
-                              {user_data.name}のイベントはすべて削除されますがよろしいですか？
-                              <br/>
                               Are you sure all {user_data.name}'s events will be deleted?
                             </AlertDialogBody>
 
@@ -203,8 +240,7 @@ const Setting = () => {
               </Tbody>
             </Table>
           </TableContainer>
-        </Box>
-      </Center>
+      </Container>
     </>
   )
 }
