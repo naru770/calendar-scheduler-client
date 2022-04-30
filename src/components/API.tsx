@@ -7,7 +7,7 @@ import {
   NewEventData
 } from './Type'
 
-export const baseUrl = 'http://localhost:8000'
+export const baseUrl = 'https://calendar-scheduler-server.herokuapp.com/'
 
 export const getUserData = async (): Promise<UserData[]> => {
   const res = await axios.get(`${baseUrl}/user`)
