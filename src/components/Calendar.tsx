@@ -23,7 +23,8 @@ import {
   PopoverFooter,
   PopoverBody,
   PopoverCloseButton,
-  Checkbox
+  Checkbox,
+  Badge
 } from '@chakra-ui/react'
 import {
   ChevronLeftIcon,
@@ -56,7 +57,8 @@ import {
 const Calendar = () => {
 
   const today = new Date()
-  const weekName = ["日", "月", "火", "水", "木", "金", "土"]
+  // const weekName = ["日", "月", "火", "水", "木", "金", "土"]
+  const weekName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
   const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({
     year: today.getFullYear(),
@@ -77,6 +79,13 @@ const Calendar = () => {
       calendarFirstDay.getMonth(),
       calendarFirstDay.getDate()
     ]
+  }
+
+  const isToday = (date: Date): Boolean => {
+    const today = new Date()
+    return (date.getFullYear() == today.getFullYear() &&
+      date.getMonth() == today.getMonth() &&
+      date.getDate() == today.getDate())
   }
   
   const getListOfCalendarDays = (year: number, month: number, day: number, calendarRowsNum: number) => {
@@ -145,7 +154,6 @@ const Calendar = () => {
 
     const firstFieldRef = useRef(null)
 
-
     const updateButton = async () => {
       const start_datetime = form.date + 'T' + form.time
       const user_id = userData.filter((e) => (e.name === form.user))[0]['id']
@@ -173,8 +181,6 @@ const Calendar = () => {
         <PopoverTrigger>
           <Box
             as='button'
-            p='0.4'
-            pl='2'
             bg={userData.filter((data) => (data.id === event.user_id))[0].color}
             color='white'
             fontSize='xs'
@@ -183,19 +189,19 @@ const Calendar = () => {
           >
             {(event['is_timed'])
               ? event['start_datetime'].split('T')[1].slice(0,'00:00'.length) + ' '
-              : ''
-            }{event['content']}
+              : ''}
+            {event['content']}
           </Box>
         </PopoverTrigger>
 
         <Portal>
           <PopoverContent boxShadow='lg'>
             <PopoverArrow />
-            <PopoverHeader>イベント編集</PopoverHeader>
+            <PopoverHeader>Edit Event</PopoverHeader>
             <PopoverCloseButton />
             <PopoverBody>
             <FormControl pb={6}>
-              <FormLabel>ユーザー</FormLabel>
+              <FormLabel>User</FormLabel>
               <Select
                 onChange={(e) => {setForm({...form, user: e.target.value})}}
                 defaultValue={userData.filter((e) => (e['id'] === event['user_id']))[0]['name']}
@@ -205,7 +211,7 @@ const Calendar = () => {
             </FormControl>
             <Box pb={6}>
               <Box pb={1}>
-                <label htmlFor="changeform-datepicker">日付</label>
+                <label htmlFor="changeform-datepicker">Date</label>
               </Box>
               <Box>
                 <input
@@ -218,7 +224,7 @@ const Calendar = () => {
             </Box>
             <Box pb={6}>
               <Box pb={1}>
-                <label htmlFor="changeform-timepicker">時間</label>
+                <label htmlFor="changeform-timepicker">Time</label>
               </Box>
               <Box>
                 <input
@@ -233,10 +239,10 @@ const Calendar = () => {
               <Checkbox
                 defaultChecked={event['is_timed']}
                 onChange={(e) => {setForm({...form, is_timed: e.target.checked})}}
-              >時間表示</Checkbox>
+              >View Time</Checkbox>
             </Box>
             <FormControl>
-              <FormLabel>イベント内容</FormLabel>
+              <FormLabel>Content</FormLabel>
               <Input
                 defaultValue={event['content']}
                 ref={firstFieldRef}
@@ -250,13 +256,13 @@ const Calendar = () => {
                 mr={3}
                 onClick={updateButton}
               >
-                更新
+                Update
               </Button>
               <Button
                 colorScheme={'red'}
                 onClick={deleteButton}
               >
-                削除
+                Delete
               </Button>
             </PopoverFooter>
           </PopoverContent>
@@ -311,9 +317,15 @@ const Calendar = () => {
               w='100%'
               spacing='0.5'
             >
-              <Box textAlign='center' fontSize='sm'>
+              <HStack>
+              <Box
+                textAlign='center'
+                fontSize='sm'
+              >
                 {listOfCalendarDays[i * 7 + j].getDate()}
               </Box>
+              {(isToday(listOfCalendarDays[i * 7 + j])) ? <Badge colorScheme='red'>Today</Badge> : ''}
+              </HStack>
               {calendarEvents[i * 7 + j].map((event: EventData) =>
                 <CalendarEventButton event={event} key={event.id} />
               )}
@@ -343,7 +355,7 @@ const Calendar = () => {
       time: '00:00',
       user: '',
       content: '',
-      is_timed: true,
+      is_timed: false,
     })
 
     const isReadyToSubmit = (): boolean => {
@@ -383,21 +395,21 @@ const Calendar = () => {
         <Portal>
           <PopoverContent boxShadow='lg'>
             <PopoverArrow />
-            <PopoverHeader>イベント編集</PopoverHeader>
+            <PopoverHeader>Edit Event</PopoverHeader>
             <PopoverCloseButton />
             <PopoverBody>
             <FormControl pb={6}>
-              <FormLabel>ユーザー</FormLabel>
+              <FormLabel>User</FormLabel>
               <Select
                 onChange={(e) => setForm({...form, user: e.target.value})}
               >
-                <option hidden>ユーザーを選択してください</option>
+                <option hidden>Select User</option>
                 {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
               </Select>
             </FormControl>
             <Box pb={6}>
               <Box pb={1}>
-                <label htmlFor="changeform-datepicker">日付</label>
+                <label htmlFor="changeform-datepicker">Date</label>
               </Box>
               <Box>
                 <input
@@ -409,7 +421,7 @@ const Calendar = () => {
             </Box>
             <Box pb={6}>
               <Box pb={1}>
-                <label htmlFor="changeform-timepicker">時間</label>
+                <label htmlFor="changeform-timepicker">Time</label>
               </Box>
               <Box>
                 <input
@@ -424,10 +436,10 @@ const Calendar = () => {
               <Checkbox
                 defaultChecked={false}
                 onChange={(e) => setForm({...form, is_timed: e.target.checked})}
-              >時間表示</Checkbox>
+              >View Time</Checkbox>
             </Box>
             <FormControl>
-              <FormLabel>イベント内容</FormLabel>
+              <FormLabel>Content</FormLabel>
               <Input
                 ref={firstFieldRef}
                 onChange={(e) => setForm({...form, content: e.target.value})}
@@ -441,7 +453,7 @@ const Calendar = () => {
                 onClick={addButton}
                 disabled={!isReadyToSubmit()}
               >
-                追加
+                Add
               </Button>
             </PopoverFooter>
           </PopoverContent>
@@ -468,15 +480,23 @@ const Calendar = () => {
               aria-label='go to next month'
             />
           </ButtonGroup>
-          <Text fontSize='3xl' >{calendarMonth.year} {' '} - {' '} {calendarMonth.month + 1}</Text>
-
-          <EventAddButton />
+          <Text fontWeight='bold' fontSize='3xl'>
+            {calendarMonth.year} {' '} - {' '} {calendarMonth.month + 1}
+          </Text>
+          <Button
+            onClick={() => {
+              setCalendarMonth({year: today.getFullYear(), month: today.getMonth()})}
+            }
+            colorScheme='blue'
+          >Today</Button>
         </HStack>
 
         <Spacer />
 
         <HStack spacing={8} pr={4}>
-
+          <Box>
+            <EventAddButton />
+          </Box>
           <Link to='/setting'>
             <Button
               leftIcon={<SettingsIcon />}

@@ -20,6 +20,7 @@ export const navbarHeight = 60
 export const CalendarNavbar: React.VFC<Props> = ({ children }) => {
 
   return (
+    <Box boxShadow="md">
     <Flex
       h={navbarHeight + 'px'}
       alignItems={'center'}
@@ -28,7 +29,7 @@ export const CalendarNavbar: React.VFC<Props> = ({ children }) => {
     >
       <HStack spacing={8}>
         <Box pl={4}>
-          <Heading size='md'>CalendarApp</Heading>
+          <Heading size='md'>Calendar</Heading>
         </Box>
       </HStack>
 
@@ -37,5 +38,6 @@ export const CalendarNavbar: React.VFC<Props> = ({ children }) => {
       { children }
 
     </Flex>
+    </Box>
   )
 }
