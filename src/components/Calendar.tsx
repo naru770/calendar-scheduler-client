@@ -50,7 +50,7 @@ import {
 import {
   CalendarNavbar,
   navbarHeight,
-} from './CalendarNavbar'
+} from './Navbar'
 
 
 const Calendar = () => {
@@ -149,8 +149,6 @@ const Calendar = () => {
 
     }, [])
 
-    console.log(event)
-
     const firstFieldRef = useRef(null)
 
     const updateButton = async () => {
@@ -180,15 +178,14 @@ const Calendar = () => {
         <PopoverTrigger>
           <Box
             as='button'
-            bg={(userData.length === 0) ? 'white'
-              : userData.filter((data) => (data.id === event.user_id))[0].color}
+            bg={userData.filter((data) => (data.id === event.user_id))[0].color}
             color='white'
-            fontSize='xs'
+            fontSize='sm'
             borderRadius='sm'
             w='97%'
           >
             {(event.is_timed)
-              ? event.start_time + ' '
+              ? event.start_time.slice(0, -3) + ' '
               : ''}
             {event.content}
           </Box>
@@ -391,7 +388,7 @@ const Calendar = () => {
             leftIcon={<AddIcon />}
             colorScheme='teal'
             variant='solid'
-          >New Event</Button>
+          >Add Event</Button>
         </PopoverTrigger>
 
         <Portal>

@@ -10,7 +10,7 @@ type Props = {
   children: React.ReactNode
 }
 
-export const navbarHeight = 60
+export const navbarHeight = 55
 
 export const CalendarNavbar: React.VFC<Props> = ({ children }) => {
 

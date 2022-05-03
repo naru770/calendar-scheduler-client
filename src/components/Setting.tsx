@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
   Box,
-  Center,
   Heading,
   TableContainer,
   Table,
@@ -48,7 +47,7 @@ import {
   UserData,
   NewUserData
 } from './Type'
-import { CalendarNavbar } from './CalendarNavbar'
+import { CalendarNavbar } from './Navbar'
 
 const Setting = () => {
 
@@ -78,7 +77,7 @@ const Setting = () => {
       <CalendarNavbar>
         <HStack spacing={8} pr={4}>
           <Spacer />
-          <Button colorScheme='teal' leftIcon={<AddIcon />} onClick={signupForm.onOpen}>New User</Button>
+          <Button colorScheme='teal' leftIcon={<AddIcon />} onClick={signupForm.onOpen}>Add User</Button>
 
           <Modal
             isOpen={signupForm.isOpen}
