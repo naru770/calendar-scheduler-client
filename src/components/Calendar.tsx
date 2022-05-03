@@ -104,12 +104,10 @@ const Calendar = () => {
   }, [])
 
   useEffect(() => {
-    fetchUserData()
-      .then((r) => setUserData(r))
-  }, [])
-
-  useEffect(() => {
-    loadEvents()
+    (async () => {
+      await fetchUserData().then((r) => setUserData(r))
+      loadEvents()
+    })()
   }, [calendarMonth, calendarRowsNum])
 
   const setNextCalnedarMonth = () => {
@@ -147,6 +145,12 @@ const Calendar = () => {
       is_timed: event.is_timed,
     })
 
+    useEffect(() => {
+
+    }, [])
+
+    console.log(event)
+
     const firstFieldRef = useRef(null)
 
     const updateButton = async () => {
@@ -176,7 +180,8 @@ const Calendar = () => {
         <PopoverTrigger>
           <Box
             as='button'
-            bg={userData.filter((data) => (data.id === event.user_id))[0].color}
+            bg={(userData.length === 0) ? 'white'
+              : userData.filter((data) => (data.id === event.user_id))[0].color}
             color='white'
             fontSize='xs'
             borderRadius='sm'
@@ -412,6 +417,7 @@ const Calendar = () => {
                 <input
                   id='changeform-datepicker'
                   type='date'
+                  value={toDateString(new Date(calendarMonth.year, calendarMonth.month, 1))}
                   onChange={(e) => setForm({...form, date: e.target.value})}
                 ></input>
               </Box>
