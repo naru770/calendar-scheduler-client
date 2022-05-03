@@ -34,7 +34,6 @@ import {
 import { Link } from 'react-router-dom'
 import {
   CalendarMonth,
-  CalendarDate,
   EventData,
   NewEventData,
   UserData
@@ -104,10 +103,11 @@ const Calendar = () => {
   }, [])
 
   useEffect(() => {
-    (async () => {
-      await fetchUserData().then((r) => setUserData(r))
-      loadEvents()
-    })()
+    const [year, month, day] = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
+    Promise.all([
+      fetchUserData().then((r) => setUserData(r)),
+      fetchEvent(year, month + 1, day, 7 * calendarRowsNum)
+    ]).then((r) => setCalendarEvents(r[1]))
   }, [calendarMonth, calendarRowsNum])
 
   const setNextCalnedarMonth = () => {
@@ -152,7 +152,7 @@ const Calendar = () => {
     const firstFieldRef = useRef(null)
 
     const updateButton = async () => {
-      const user_id = userData.filter((e) => (e.name === form.user))[0]['id']
+      const user_id = userData.filter((e) => (e.name === form.user))[0].id
       const newData: EventData = {
         id: event.id,
         start_date: form.date,
@@ -201,9 +201,9 @@ const Calendar = () => {
               <FormLabel>User</FormLabel>
               <Select
                 onChange={(e) => {setForm({...form, user: e.target.value})}}
-                defaultValue={userData.filter((e) => (e['id'] === event['user_id']))[0]['name']}
+                defaultValue={userData.filter((e) => (e.id === event.user_id))[0].name}
               >
-                {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
+                {userData.map((data) => <option key={data.id}>{data.name}</option>)}
               </Select>
             </FormControl>
             <Box pb={6}>
@@ -234,14 +234,14 @@ const Calendar = () => {
             </Box>
             <Box pb={6}>
               <Checkbox
-                defaultChecked={event['is_timed']}
+                defaultChecked={event.is_timed}
                 onChange={(e) => {setForm({...form, is_timed: e.target.checked})}}
               >View Time</Checkbox>
             </Box>
             <FormControl>
               <FormLabel>Content</FormLabel>
               <Input
-                defaultValue={event['content']}
+                defaultValue={event.content}
                 ref={firstFieldRef}
                 onChange={(e) => {setForm({...form, content: e.target.value})}}
               />
@@ -403,7 +403,7 @@ const Calendar = () => {
                 onChange={(e) => setForm({...form, user: e.target.value})}
               >
                 <option hidden>Select User</option>
-                {userData.map((data) => <option key={data.id}>{data['name']}</option>)}
+                {userData.map((data) => <option key={data.id}>{data.name}</option>)}
               </Select>
             </FormControl>
             <Box pb={6}>
@@ -414,7 +414,7 @@ const Calendar = () => {
                 <input
                   id='changeform-datepicker'
                   type='date'
-                  value={toDateString(new Date(calendarMonth.year, calendarMonth.month, 1))}
+                  defaultValue={toDateString(new Date(calendarMonth.year, calendarMonth.month, 1))}
                   onChange={(e) => setForm({...form, date: e.target.value})}
                 ></input>
               </Box>
