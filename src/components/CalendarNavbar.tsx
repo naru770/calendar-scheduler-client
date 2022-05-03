@@ -1,14 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
 import {
-  Button,
-  ButtonGroup,
   Flex,
   Box,
   Heading,
   Spacer,
   HStack,
-  Text,
-  IconButton,
 } from '@chakra-ui/react'
 
 type Props = {

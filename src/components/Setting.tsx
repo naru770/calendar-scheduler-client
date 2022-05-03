@@ -40,9 +40,9 @@ import {
 } from '@chakra-ui/icons'
 import {
   deleteUserData,
-  getUserData,
-  addUserData,
-  updateUserData,
+  fetchUserData,
+  createUserData,
+  modifyUserData,
 } from './API'
 import {
   UserData,
@@ -55,19 +55,18 @@ const Setting = () => {
   const [userData, setUserData] = useState<UserData[]>([] as UserData[])
   const [newUserData, setNewUserData] = useState<NewUserData>({name: '', color: ''})
   const signupForm = useDisclosure()
-  const [openAlertId, setOpenAlertId] = useState<number>(-1)  // 削除警告を開いているユーザID
-  const [openEditModalId, setOpenEditModalId] = useState<number>(-1)  // 編集フォームを開いているユーザID
-  const [updatedUserData, setUpdatedUserData] = useState<UserData>({id: -1, name: '', color: ''})
+  const [openAlertId, setOpenAlertId] = useState<string>('')  // 削除警告を開いているユーザID
+  const [openEditModalId, setOpenEditModalId] = useState<string>('')  // 編集フォームを開いているユーザID
+  const [updatedUserData, setUpdatedUserData] = useState<UserData>({id: '', name: '', color: ''})
 
-  const onOpenAlert = (id: number) => setOpenAlertId(id)
-  const onCloseAlert = () => setOpenAlertId(-1)
+  const onOpenAlert = (id: string) => setOpenAlertId(id)
+  const onCloseAlert = () => setOpenAlertId('')
 
-  const onOpenEditModal = (id: number) => setOpenEditModalId(id)
-  const onCloseEditModal = () => setOpenEditModalId(-1)
-
+  const onOpenEditModal = (id: string) => setOpenEditModalId(id)
+  const onCloseEditModal = () => setOpenEditModalId('')
 
   const loadUserData = () => {
-    getUserData().then((r) => setUserData(r))
+    fetchUserData().then((r) => setUserData(r))
   }
 
   useEffect(() => {
@@ -110,7 +109,7 @@ const Setting = () => {
               <ModalFooter>
                 <ButtonGroup>
                   <Button colorScheme='blue' onClick={() => {
-                    addUserData(newUserData)
+                    createUserData(newUserData)
                       .then((e) => {
                         loadUserData()
                         signupForm.onClose()
@@ -146,7 +145,7 @@ const Setting = () => {
               
               {userData.map((user_data: UserData, i) => (
                 <Tr key={user_data.id}>
-                  <Td>{user_data.id}</Td>
+                  <Td>{user_data.id.slice(0, 4)}...</Td>
                   <Td>{user_data.name}</Td>
                   <Td>{user_data.color}</Td>
                   <Td>
@@ -188,7 +187,7 @@ const Setting = () => {
                           <ModalFooter>
                             <ButtonGroup>
                               <Button colorScheme='blue' onClick={() => {
-                                updateUserData(updatedUserData)
+                                modifyUserData(updatedUserData)
                                   .then((e) => {
                                     onCloseEditModal()
                                     loadUserData()

@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { supabase } from '../libs/supabase'
 
 import {
   UserData,
@@ -7,42 +7,75 @@ import {
   NewEventData
 } from './Type'
 
-export const baseUrl = 'https://calendar-scheduler-server.herokuapp.com/'
 
-export const getUserData = async (): Promise<UserData[]> => {
-  const res = await axios.get(`${baseUrl}/user`)
-    .then((r) => r.data)
-  return res['users']
+export const fetchUserData = async (): Promise<UserData[]> => {
+  const { data } = await supabase
+    .from('user')
+    .select('*')
+  return data as UserData[]
 }
 
-export const addUserData = async (newUserData: NewUserData) => {
-  await axios.post(`${baseUrl}/user`, newUserData)
+export const createUserData = async (user: NewUserData) => {
+  const { data, error } = await supabase
+    .from('user')
+    .insert(user)
 }
 
-export const updateUserData = async (newUserData: UserData) => {
-  await axios.put(`${baseUrl}/user`, newUserData)
+export const modifyUserData = async (user: UserData) => {
+  const { data, error } = await supabase
+    .from('user')
+    .update(user)
+    .match({id: user.id})
 }
 
-export const deleteUserData = async (id: number) => {
-  await axios.delete(`${baseUrl}/user/${id}`)
+export const deleteUserData = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('user')
+    .delete()
+    .match({id: userId})
 }
 
-export const getEvent = async (year: number, month: number, day: number, days: number): Promise<EventData[][]> => {
-  return await axios.get(`${baseUrl}/event/${year}/${month}/${day}`, {
-    params: {days: days}
-  })
-    .then((r) => r.data)
-    .then((r) => r['events'])
+export const zeroPadding = (num: number | string, digit: number): string => ('0'.repeat(digit) + num).slice(-1 * digit)
+export const toDateString = (datetime: Date) => {
+  const dateString = datetime.getFullYear() + '-'
+  + zeroPadding(datetime.getMonth() + 1, 2) + '-'
+  + zeroPadding(datetime.getDate(), 2)
+  return dateString
 }
 
-export const addEvent = async (event: NewEventData) => {
-  await axios.post(`${baseUrl}/event`, event)
+export const fetchEvent = async (year: number, month: number, day: number, days: number): Promise<EventData[]> => {
+
+  const startDate = new Date(year, month - 1, day)  // Date
+  const endDate = new Date(startDate.getTime() + days * 86400 * 1000)
+
+  const startDateString = toDateString(startDate)
+  const endDateString = toDateString(endDate)
+
+  const { data, error } = await supabase
+    .from('event')
+    .select('*')
+    .gte('start_date', startDateString)
+    .lte('start_date', endDateString)
+  
+  return data as EventData[]
 }
 
-export const updateEvent = async (event: EventData) => {
-  await axios.put(`${baseUrl}/event`, event)
+export const createEvent = async (event: NewEventData) => {
+  const { data, error } = await supabase
+    .from('event')
+    .insert(event)
 }
 
-export const deleteEvent = async (eventId: number) => {
-  await axios.delete(`${baseUrl}/event/${eventId}`)
+export const modifyEvent = async (event: EventData) => {
+  const { data, error } = await supabase
+    .from('event')
+    .update(event)
+    .match({id: event.id})
+}
+
+export const deleteEvent = async (eventId: string) => {
+  const { data, error } = await supabase
+    .from('event')
+    .delete()
+    .match({id: eventId})
 }

@@ -4,7 +4,6 @@ import {
   ButtonGroup,
   Flex,
   Box,
-  Heading,
   Spacer,
   HStack,
   Text,
@@ -33,7 +32,6 @@ import {
   AddIcon
 } from '@chakra-ui/icons'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
 import {
   CalendarMonth,
   CalendarDate,
@@ -42,11 +40,12 @@ import {
   UserData
 } from './Type'
 import {
-  baseUrl,
-  addEvent,
-  updateEvent,
+  fetchEvent,
+  createEvent,
+  modifyEvent,
   deleteEvent,
-  getEvent
+  fetchUserData,
+  toDateString,
 } from './API'
 import {
   CalendarNavbar,
@@ -65,8 +64,7 @@ const Calendar = () => {
     month: today.getMonth()
   })
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5)
-  const [calendarEvents, setCalendarEvents] = useState<EventData[][]>(
-    Array(7 * calendarRowsNum).fill([]) as EventData[][])
+  const [calendarEvents, setCalendarEvents] = useState<EventData[]>([] as EventData[])
   const [userData, setUserData] = useState<UserData[]>([] as UserData[])
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight)
 
@@ -83,9 +81,9 @@ const Calendar = () => {
 
   const isToday = (date: Date): Boolean => {
     const today = new Date()
-    return (date.getFullYear() == today.getFullYear() &&
-      date.getMonth() == today.getMonth() &&
-      date.getDate() == today.getDate())
+    return (date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate())
   }
   
   const getListOfCalendarDays = (year: number, month: number, day: number, calendarRowsNum: number) => {
@@ -95,9 +93,9 @@ const Calendar = () => {
     return listOfDays
   }
 
-  const loadEvents = () => {
+  const loadEvents = async () => {
     const [year, month, day] = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
-    getEvent(year, month + 1, day, 7 * calendarRowsNum)
+    await fetchEvent(year, month + 1, day, 7 * calendarRowsNum)
       .then((r) => setCalendarEvents(r))
   }
 
@@ -105,14 +103,11 @@ const Calendar = () => {
     window.onresize = () => setInnerHeight(window.innerHeight)
   }, [])
 
-  // get user data
   useEffect(() => {
-    axios(`${baseUrl}/user`)
-      .then((r) => r.data)
-      .then((r) => setUserData(r['users']))
+    fetchUserData()
+      .then((r) => setUserData(r))
   }, [])
 
-  // get event data
   useEffect(() => {
     loadEvents()
   }, [calendarMonth, calendarRowsNum])
@@ -145,8 +140,8 @@ const Calendar = () => {
     }
 
     const [form, setForm] = useState<Form>({
-      date: event.start_datetime.split('T')[0],
-      time: event.start_datetime.split('T')[1],
+      date: event.start_date,
+      time: event.start_time,
       user: userData.filter((e) => (e.id === event.user_id))[0].name,
       content: event.content,
       is_timed: event.is_timed,
@@ -155,21 +150,21 @@ const Calendar = () => {
     const firstFieldRef = useRef(null)
 
     const updateButton = async () => {
-      const start_datetime = form.date + 'T' + form.time
       const user_id = userData.filter((e) => (e.name === form.user))[0]['id']
       const newData: EventData = {
         id: event.id,
-        start_datetime: start_datetime,
+        start_date: form.date,
+        start_time: form.time,
         content: form.content,
         is_timed: form.is_timed,
         user_id: user_id,
       }
-      await updateEvent(newData)
+      await modifyEvent(newData)
       loadEvents()
     }
 
     const deleteButton = async () => {
-      await deleteEvent(event['id'])
+      await deleteEvent(event.id)
       loadEvents()
     }
     
@@ -187,10 +182,10 @@ const Calendar = () => {
             borderRadius='sm'
             w='97%'
           >
-            {(event['is_timed'])
-              ? event['start_datetime'].split('T')[1].slice(0,'00:00'.length) + ' '
+            {(event.is_timed)
+              ? event.start_time + ' '
               : ''}
-            {event['content']}
+            {event.content}
           </Box>
         </PopoverTrigger>
 
@@ -217,7 +212,7 @@ const Calendar = () => {
                 <input
                   id='changeform-datepicker'
                   type='date'
-                  defaultValue={event['start_datetime'].split('T')[0]}
+                  defaultValue={event.start_date}
                   onChange={(e) => {setForm({...form, date: e.target.value})}}
                 ></input>
               </Box>
@@ -230,7 +225,7 @@ const Calendar = () => {
                 <input
                   id='changeform-timepicker'
                   type='time'
-                  defaultValue={event['start_datetime'].split('T')[1]}
+                  defaultValue={event.start_time}
                   onChange={(e) => {setForm({...form, time: e.target.value})}}
                 ></input>
               </Box>
@@ -326,7 +321,9 @@ const Calendar = () => {
               </Box>
               {(isToday(listOfCalendarDays[i * 7 + j])) ? <Badge colorScheme='red'>Today</Badge> : ''}
               </HStack>
-              {calendarEvents[i * 7 + j].map((event: EventData) =>
+              {calendarEvents
+                .filter((e) => e.start_date === toDateString(listOfCalendarDays[i * 7 + j]))
+                .map((event: EventData) =>
                 <CalendarEventButton event={event} key={event.id} />
               )}
             </VStack>
@@ -367,15 +364,15 @@ const Calendar = () => {
     }
 
     const addButton = async () => {
-      const start_datetime = form.date + 'T' + form.time
-      const user_id = userData.filter((e) => (e.name === form.user))[0]['id']
+      const user_id = userData.filter((e) => (e.name === form.user))[0].id
       const newData: NewEventData = {
-        start_datetime: start_datetime,
+        start_date: form.date,
+        start_time: form.time,
         content: form.content,
         is_timed: form.is_timed,
         user_id: user_id,
       }
-      await addEvent(newData)
+      await createEvent(newData)
       loadEvents()
     }
     

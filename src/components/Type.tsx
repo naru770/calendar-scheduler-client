@@ -7,28 +7,23 @@ export interface CalendarDate extends CalendarMonth {
   day: number,
 }
 
-export interface EventData {
-  id: number,
-  content: string,
-  user_id: number,
-  start_datetime: string,
-  is_timed: boolean,
-}
-
 export interface NewEventData {
+  user_id: string,
   content: string,
-  user_id: number,
-  start_datetime: string,
+  start_date: string,
+  start_time: string,
   is_timed: boolean,
 }
 
-export interface UserData {
-  id: number,
-  name: string,
-  color: string,
+export interface EventData extends NewEventData {
+  id: string,
 }
 
 export interface NewUserData {
   name: string,
   color: string,
+}
+
+export interface UserData extends NewUserData {
+  id: string,
 }
