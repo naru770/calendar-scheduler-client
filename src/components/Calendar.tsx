@@ -57,6 +57,7 @@ const Calendar = () => {
   const today = new Date()
   // const weekName = ["日", "月", "火", "水", "木", "金", "土"]
   const weekName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const weekNameHeight = 20
 
   const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({
     year: today.getFullYear(),
@@ -275,7 +276,7 @@ const Calendar = () => {
     
     return (
       <Box>
-        <Flex h={'20px'}>
+        <Flex h={weekNameHeight + 'px'}>
         {weekName.map((w, i) =>
           <Flex
             grow={1}
@@ -296,7 +297,7 @@ const Calendar = () => {
       {Array(calendarRowsNum).fill(0).map((_, i) =>
         // calendar row
         <Flex
-          h={Math.floor((innerHeight - navbarHeight - 20) / calendarRowsNum) + 'px'}
+          h={Math.floor((innerHeight - (navbarHeight + weekNameHeight)) / calendarRowsNum - 1) + 'px'}
           key={i}
         >
         {Array(7).fill(0).map((_, j) =>
