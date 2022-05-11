@@ -230,6 +230,7 @@ const Calendar = () => {
                   type='time'
                   defaultValue={event.start_time}
                   onChange={(e) => {setForm({...form, time: e.target.value})}}
+                  disabled={!form.is_timed}
                 ></input>
               </Box>
             </Box>
@@ -361,7 +362,6 @@ const Calendar = () => {
     const isReadyToSubmit = (): boolean => {
       return (
         form.user !== '' &&
-        form.date !== '' &&
         form.content !== ''
       )
     }
@@ -430,6 +430,7 @@ const Calendar = () => {
                   type='time'
                   defaultValue={form.time}
                   onChange={(e) => setForm({...form, time: e.target.value})}
+                  disabled={!form.is_timed}
                 ></input>
               </Box>
             </Box>
