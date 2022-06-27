@@ -27,7 +27,7 @@ REACT_APP_SUPABASE_URL={supabaseのProject URL}
 REACT_APP_SUPABASE_KEY={supabaseのProject API keys}
 ```
 
-3. 以下を実行
+3. 以下を実行。
 ```
 npm install
 npm start
