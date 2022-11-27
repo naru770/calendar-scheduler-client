@@ -24,13 +24,13 @@ table name: user
 | color      | text                     | text        |
 | id         | uuid                     | uuid        |
 
-2. ```calendar-scheduler-client/src/.env.local```を作成し、以下を記述。
+1. ```calendar-scheduler-client/.env.local```を作成し、以下を記述。
 ```
 REACT_APP_SUPABASE_URL={supabaseのProject URL}
 REACT_APP_SUPABASE_KEY={supabaseのProject API keys}
 ```
 
-3. 以下を実行。
+1. 以下を実行。
 ```
 npm install
 npm start
