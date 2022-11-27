@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   Button,
   ButtonGroup,
@@ -33,6 +33,7 @@ import {
 } from '@chakra-ui/icons'
 import { Link } from 'react-router-dom'
 import {
+  CalendarDate,
   CalendarMonth,
   EventData,
   NewEventData,
@@ -99,18 +100,6 @@ const Calendar = () => {
       .then((r) => setCalendarEvents(r))
   }
 
-  useEffect(() => {
-    window.onresize = () => setInnerHeight(window.innerHeight)
-  }, [])
-
-  useEffect(() => {
-    const [year, month, day] = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
-    Promise.all([
-      fetchUserData().then((r) => setUserData(r)),
-      fetchEvent(year, month + 1, day, 7 * calendarRowsNum)
-    ]).then((r) => setCalendarEvents(r[1]))
-  }, [calendarMonth, calendarRowsNum])
-
   const setNextCalnedarMonth = () => {
     setCalendarMonth((prev: CalendarMonth) => {
       const year = prev.year + Math.floor((prev.month + 1) / 12)
@@ -126,6 +115,24 @@ const Calendar = () => {
       return {year: year, month: month}
     })
   }
+
+
+  useEffect(() => {
+    window.onresize = () => setInnerHeight(window.innerHeight)
+  }, [])
+
+  useEffect(() => {
+    const [year, month, day] = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
+    
+    // finish loading of user data before registering event
+    Promise.all([
+      fetchUserData().then((r) => setUserData(r)),
+      fetchEvent(year, month + 1, day, 7 * calendarRowsNum)
+    ]).then((r) => setCalendarEvents(r[1]))
+    
+  }, [calendarMonth, calendarRowsNum])
+
+
 
 
   const CalendarEventButton: React.FC<{event: EventData}> = ({event}) => {
@@ -150,7 +157,7 @@ const Calendar = () => {
 
     }, [])
 
-    const firstFieldRef = useRef(null)
+    const firstFieldRef = useRef(null)  // ref to event box dom
 
     const updateButton = async () => {
       const user_id = userData.filter((e) => (e.name === form.user))[0].id
@@ -176,6 +183,7 @@ const Calendar = () => {
         placement='right'
         initialFocusRef={firstFieldRef}
       >
+
         <PopoverTrigger>
           <Box
             as='button'
@@ -270,76 +278,13 @@ const Calendar = () => {
     )
   }
 
-  const CalendarTable = () => {
-
-    const firstDay = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
-    const listOfCalendarDays = getListOfCalendarDays(firstDay[0], firstDay[1], firstDay[2], calendarRowsNum)
-    
-    return (
-      <Box>
-        <Flex h={weekNameHeight + 'px'}>
-        {weekName.map((w, i) =>
-          <Flex
-            grow={1}
-            basis={1}
-            justifyContent='center'
-            borderLeft={(i === 0) ? '1px' : undefined}
-            borderRight='1px'
-            borderTop='1px'
-            borderColor='#dadce0'
-            key={w}
-          >
-            <Box fontSize='sm'>
-              {w}
-            </Box>
-          </Flex>
-        )}
-        </Flex>
-      {Array(calendarRowsNum).fill(0).map((_, i) =>
-        // calendar row
-        <Flex
-          h={Math.floor((innerHeight - (navbarHeight + weekNameHeight)) / calendarRowsNum - 1) + 'px'}
-          key={i}
-        >
-        {Array(7).fill(0).map((_, j) =>
-          // calendar cell
-          <Flex
-            grow={1}
-            basis={1}
-            borderLeft={(j === 0) ? '1px' : undefined}
-            borderRight='1px'
-            borderBottom='1px'
-            borderColor='#dadce0'
-            key={j}
-          >
-            <VStack
-              w='100%'
-              spacing='0.5'
-            >
-              <HStack>
-              <Box
-                textAlign='center'
-                fontSize='sm'
-              >
-                {listOfCalendarDays[i * 7 + j].getDate()}
-              </Box>
-              {(isToday(listOfCalendarDays[i * 7 + j])) ? <Badge colorScheme='red'>Today</Badge> : ''}
-              </HStack>
-              {calendarEvents
-                .filter((e) => e.start_date === toDateString(listOfCalendarDays[i * 7 + j]))
-                .map((event: EventData) =>
-                <CalendarEventButton event={event} key={event.id} />
-              )}
-            </VStack>
-          </Flex>
-        )}
-        </Flex>
-      )}
-      </Box>
-    )
+  type Props = {
+    children: React.ReactNode,
+    defaultDate: CalendarDate
   }
 
-  const EventAddButton = () => {
+
+  const EventAddButton: React.VFC<Props> = ({ children, defaultDate }) => {
 
     interface Form {
       date: string,
@@ -385,11 +330,9 @@ const Calendar = () => {
         initialFocusRef={firstFieldRef}
       >
         <PopoverTrigger>
-          <Button
-            leftIcon={<AddIcon />}
-            colorScheme='teal'
-            variant='solid'
-          >Add Event</Button>
+
+          { children }
+
         </PopoverTrigger>
 
         <Portal>
@@ -415,7 +358,9 @@ const Calendar = () => {
                 <input
                   id='changeform-datepicker'
                   type='date'
-                  defaultValue={toDateString(new Date(calendarMonth.year, calendarMonth.month, 1))}
+                  defaultValue={
+                    toDateString(new Date(defaultDate.year, defaultDate.month, defaultDate.day))
+                  }
                   onChange={(e) => setForm({...form, date: e.target.value})}
                 ></input>
               </Box>
@@ -463,6 +408,99 @@ const Calendar = () => {
       </Popover>
     )
   }
+  
+  
+
+  const CalendarTable = () => {
+
+    const firstDay = getFirstSquareOfCalendar(calendarMonth.year, calendarMonth.month)
+    const listOfCalendarDays = getListOfCalendarDays(firstDay[0], firstDay[1], firstDay[2], calendarRowsNum)
+    
+    return (
+      <Box>
+        <Flex h={weekNameHeight + 'px'}>
+        {weekName.map((w, i) =>
+          <Flex
+            grow={1}
+            basis={1}
+            justifyContent='center'
+            borderLeft={(i === 0) ? '1px' : undefined}
+            borderRight='1px'
+            borderTop='1px'
+            borderColor='#dadce0'
+            key={w}
+          >
+            <Box fontSize='sm'>
+              {w}
+            </Box>
+          </Flex>
+        )}
+        </Flex>
+      {Array(calendarRowsNum).fill(0).map((_, i) =>
+        // calendar row
+        <Flex
+          h={Math.floor((innerHeight - (navbarHeight + weekNameHeight)) / calendarRowsNum - 1) + 'px'}
+          key={i}
+        >
+        {Array(7).fill(0).map((_, j) =>
+          // calendar cell
+          
+          <Flex
+            grow={1}
+            basis={1}
+            borderLeft={(j === 0) ? '1px' : undefined}
+            borderRight='1px'
+            borderBottom='1px'
+            borderColor='#dadce0'
+            key={j}
+          >
+            <VStack
+              w='100%'
+              spacing='0.5'
+            >
+
+
+              {/* num of day and today badge */}
+              <HStack>
+                <Box
+                  textAlign='center'
+                  fontSize='sm'
+                >
+                  {listOfCalendarDays[i * 7 + j].getDate()}
+                </Box>
+                {(isToday(listOfCalendarDays[i * 7 + j])) ? <Badge colorScheme='red'>Today</Badge> : ''}
+              </HStack>
+
+
+              {/* event buttons */}
+              {calendarEvents
+                .filter((e) => e.start_date === toDateString(listOfCalendarDays[i * 7 + j]))
+                .map((event: EventData) =>
+                  <CalendarEventButton event={event} key={event.id} />
+                )
+              }
+
+
+              {/* add event trigger space */}
+              <EventAddButton defaultDate={{
+                year: listOfCalendarDays[i * 7 + j].getFullYear(),
+                month: listOfCalendarDays[i * 7 + j].getMonth(),
+                day: listOfCalendarDays[i * 7 + j].getDate()
+              }}>
+                <Box h='100%' w='100%'> </Box>
+              </EventAddButton>
+              
+
+            </VStack>
+          </Flex>
+        )}
+        </Flex>
+      )}
+      </Box>
+    )
+  }
+
+  
 
   const LocalCalendarNavbar = () => {
     return (
@@ -497,7 +535,15 @@ const Calendar = () => {
 
         <HStack spacing={8} pr={4}>
           <Box>
-            <EventAddButton />
+            <EventAddButton defaultDate={{
+              year: calendarMonth.year,
+              month: calendarMonth.month,
+              day: 1
+            }}>
+              <Button leftIcon={<AddIcon />} colorScheme='teal' >
+                Add Event
+              </Button>
+            </EventAddButton>
           </Box>
           <Link to='/setting'>
             <Button
