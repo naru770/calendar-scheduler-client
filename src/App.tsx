@@ -1,12 +1,7 @@
-import {
-  BrowserRouter,
-  Route,
-  Routes
-} from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import Calendar from './components/Calendar'
-import Setting from './components/Setting'
-
+import Calendar from "./components/Calendar";
+import Setting from "./components/Setting";
 
 const App = () => {
   return (
@@ -16,7 +11,7 @@ const App = () => {
         <Route path="/setting" element={<Setting />} />
       </Routes>
     </BrowserRouter>
-  )
-}
+  );
+};
 
-export default App
+export default App;
