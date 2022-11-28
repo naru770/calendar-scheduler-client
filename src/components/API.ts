@@ -1,6 +1,6 @@
 import { supabase } from "../libs/supabase";
-
 import { UserData, NewUserData, EventData, NewEventData } from "./Type";
+import moment from "moment";
 
 export const fetchUserData = async (): Promise<UserData[]> => {
   const { data } = await supabase.from("user").select("*");
@@ -25,17 +25,8 @@ export const deleteUserData = async (userId: string) => {
     .match({ id: userId });
 };
 
-export const zeroPadding = (num: number | string, digit: number): string =>
-  ("0".repeat(digit) + num).slice(-1 * digit);
-export const toDateString = (datetime: Date) => {
-  const dateString =
-    datetime.getFullYear() +
-    "-" +
-    zeroPadding(datetime.getMonth() + 1, 2) +
-    "-" +
-    zeroPadding(datetime.getDate(), 2);
-  return dateString;
-};
+export const toDateString = (datetime: Date) =>
+  moment(datetime).format("YYYY-MM-DD");
 
 export const fetchEvent = async (
   year: number,
@@ -59,19 +50,13 @@ export const fetchEvent = async (
 };
 
 export const createEvent = async (event: NewEventData) => {
-  const { data, error } = await supabase.from("event").insert(event);
+  await supabase.from("event").insert(event);
 };
 
 export const modifyEvent = async (event: EventData) => {
-  const { data, error } = await supabase
-    .from("event")
-    .update(event)
-    .match({ id: event.id });
+  await supabase.from("event").update(event).match({ id: event.id });
 };
 
 export const deleteEvent = async (eventId: string) => {
-  const { data, error } = await supabase
-    .from("event")
-    .delete()
-    .match({ id: eventId });
+  await supabase.from("event").delete().match({ id: eventId });
 };

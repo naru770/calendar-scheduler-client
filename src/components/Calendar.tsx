@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Button,
   ButtonGroup,
@@ -13,14 +13,10 @@ import {
   FormLabel,
   Input,
   Select,
-  Portal,
   Popover,
   PopoverArrow,
   PopoverTrigger,
   PopoverContent,
-  PopoverHeader,
-  PopoverFooter,
-  PopoverBody,
   PopoverCloseButton,
   Checkbox,
   Badge,
@@ -31,6 +27,7 @@ import {
   SettingsIcon,
   AddIcon,
 } from "@chakra-ui/icons";
+import moment from "moment";
 import { Link } from "react-router-dom";
 import {
   CalendarDate,
@@ -296,15 +293,19 @@ const Calendar = () => {
     const firstFieldRef = useRef(null);
 
     const [form, setForm] = useState<Form>({
-      date: "",
-      time: "00:00",
+      date: moment([
+        defaultDate.year,
+        defaultDate.month,
+        defaultDate.day,
+      ]).format("YYYY-MM-DD"),
+      time: "00:00:00",
       user: "",
       content: "",
       is_timed: false,
     });
 
     const isReadyToSubmit = (): boolean => {
-      return form.user !== "" && form.content !== "";
+      return form.date !== "" && form.user !== "" && form.content !== "";
     };
 
     const addButton = async () => {
@@ -382,7 +383,6 @@ const Calendar = () => {
             </FormControl>
 
             <ButtonGroup w="full" display="flex" justifyContent="flex-end">
-              <Button variant="outline">Cancel</Button>
               <Button
                 colorScheme={"blue"}
                 onClick={addButton}
