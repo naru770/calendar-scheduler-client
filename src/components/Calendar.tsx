@@ -21,13 +21,13 @@ import {
   Checkbox,
   Badge,
 } from "@chakra-ui/react";
+import { useQuery } from "react-query";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   SettingsIcon,
   AddIcon,
 } from "@chakra-ui/icons";
-import moment from "moment";
 import { Link } from "react-router-dom";
 import {
   CalendarDate,
@@ -45,80 +45,68 @@ import {
   toDateString,
 } from "./API";
 import { CalendarNavbar, navbarHeight } from "./Navbar";
+import { DateTime } from "luxon";
 
 const Calendar = () => {
-  const today = new Date();
-  // const weekName = ["日", "月", "火", "水", "木", "金", "土"]
+  const today = DateTime.now();
   const weekName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const weekNameHeight = 20;
 
   const [calendarMonth, setCalendarMonth] = useState<CalendarMonth>({
-    year: today.getFullYear(),
-    month: today.getMonth(),
+    year: today.year,
+    month: today.month,
   });
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5);
-  const [calendarEvents, setCalendarEvents] = useState<EventData[]>(
-    [] as EventData[]
-  );
+  const [calendarEvents, setCalendarEvents] = useState<EventData[]>([]);
   const [userData, setUserData] = useState<UserData[]>([] as UserData[]);
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight);
 
-  const getFirstSquareOfCalendar = (year: number, month: number): number[] => {
-    const firstDay = new Date(year, month, 1);
-    const diff = firstDay.getDay() * 86400 * 1000;
-    const calendarFirstDay = new Date(firstDay.getTime() - diff);
-    return [
-      calendarFirstDay.getFullYear(),
-      calendarFirstDay.getMonth(),
-      calendarFirstDay.getDate(),
-    ];
+  const getFirstSquareOfCalendar = (month: CalendarMonth): DateTime => {
+    const firstDay = DateTime.local(month.year, month.month, 1);
+    const firstSquare = firstDay.minus({ days: firstDay.weekday });
+    return firstSquare;
   };
 
-  const isToday = (date: Date): Boolean => {
-    const today = new Date();
-    return (
-      date.getFullYear() === today.getFullYear() &&
-      date.getMonth() === today.getMonth() &&
-      date.getDate() === today.getDate()
-    );
-  };
+  const isToday = (date: DateTime): Boolean =>
+    date.year === today.year &&
+    date.month === today.month &&
+    date.day === today.day;
 
   const getListOfCalendarDays = (
-    year: number,
-    month: number,
-    day: number,
+    date: DateTime,
     calendarRowsNum: number
-  ) => {
-    const firstDay = new Date(year, month, day);
+  ): DateTime[] => {
     const listOfDays = Array(7 * calendarRowsNum)
       .fill(0)
-      .map((_, i) => new Date(firstDay.getTime() + i * 86400 * 1000));
+      .map((_, i) => date.plus({ days: i }));
     return listOfDays;
   };
 
   const loadEvents = async () => {
-    const [year, month, day] = getFirstSquareOfCalendar(
-      calendarMonth.year,
-      calendarMonth.month
-    );
-    await fetchEvent(year, month + 1, day, 7 * calendarRowsNum).then((r) =>
-      setCalendarEvents(r)
-    );
+    const firstSquare = getFirstSquareOfCalendar(calendarMonth);
+    await fetchEvent(
+      firstSquare.year,
+      firstSquare.month,
+      firstSquare.day,
+      7 * calendarRowsNum
+    ).then((r) => setCalendarEvents(r));
   };
 
   const setNextCalnedarMonth = () => {
     setCalendarMonth((prev: CalendarMonth) => {
-      const year = prev.year + Math.floor((prev.month + 1) / 12);
-      const month = (prev.month + 1) % 12;
-      return { year: year, month: month };
+      const nextMonth = DateTime.local(prev.year, prev.month, 1).plus({
+        months: 1,
+      });
+      return { year: nextMonth.year, month: nextMonth.month };
     });
   };
 
   const setPrevCalendarMonth = () => {
     setCalendarMonth((prev: CalendarMonth) => {
-      const year = prev.year + Math.floor((prev.month - 1) / 12);
-      const month = (prev.month + 12 - 1) % 12;
-      return { year: year, month: month };
+      const nextMonth = DateTime.local(prev.year, prev.month, 1).minus({
+        months: 1,
+      });
+      return { year: nextMonth.year, month: nextMonth.month };
     });
   };
 
@@ -127,16 +115,26 @@ const Calendar = () => {
   }, []);
 
   useEffect(() => {
-    const [year, month, day] = getFirstSquareOfCalendar(
-      calendarMonth.year,
-      calendarMonth.month
-    );
+    const firstSquare = getFirstSquareOfCalendar(calendarMonth);
 
     // finish loading of user data before registering event
-    Promise.all([
-      fetchUserData().then((r) => setUserData(r)),
-      fetchEvent(year, month + 1, day, 7 * calendarRowsNum),
-    ]).then((r) => setCalendarEvents(r[1]));
+    // Promise.all([
+    //   fetchUserData().then((r) => setUserData(r)),
+    //   fetchEvent(
+    //     firstSquare.year,
+    //     firstSquare.month,
+    //     firstSquare.day,
+    //     7 * calendarRowsNum
+    //   ),
+    // ]).then((r) => setCalendarEvents(r[1]));
+
+    fetchUserData().then((r) => setUserData(r));
+    fetchEvent(
+      firstSquare.year,
+      firstSquare.month,
+      firstSquare.day,
+      7 * calendarRowsNum
+    ).then((r) => setCalendarEvents(r));
   }, [calendarMonth, calendarRowsNum]);
 
   const CalendarEventButton: React.FC<{ event: EventData }> = ({ event }) => {
@@ -278,7 +276,7 @@ const Calendar = () => {
 
   type Props = {
     children: React.ReactNode;
-    defaultDate: CalendarDate;
+    defaultDate: DateTime;
   };
 
   const EventAddButton: React.VFC<Props> = ({ children, defaultDate }) => {
@@ -293,11 +291,7 @@ const Calendar = () => {
     const firstFieldRef = useRef(null);
 
     const [form, setForm] = useState<Form>({
-      date: moment([
-        defaultDate.year,
-        defaultDate.month,
-        defaultDate.day,
-      ]).format("YYYY-MM-DD"),
+      date: defaultDate.toFormat("YYYY-MM-DD"),
       time: "00:00:00",
       user: "",
       content: "",
@@ -347,9 +341,7 @@ const Calendar = () => {
               <input
                 id="changeform-datepicker"
                 type="date"
-                defaultValue={toDateString(
-                  new Date(defaultDate.year, defaultDate.month, defaultDate.day)
-                )}
+                defaultValue={toDateString(defaultDate)}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
               ></input>
             </FormControl>
@@ -398,16 +390,8 @@ const Calendar = () => {
   };
 
   const CalendarTable = () => {
-    const firstDay = getFirstSquareOfCalendar(
-      calendarMonth.year,
-      calendarMonth.month
-    );
-    const listOfCalendarDays = getListOfCalendarDays(
-      firstDay[0],
-      firstDay[1],
-      firstDay[2],
-      calendarRowsNum
-    );
+    const firstDay = getFirstSquareOfCalendar(calendarMonth);
+    const listOfCalendarDays = getListOfCalendarDays(firstDay, calendarRowsNum);
 
     return (
       <Box>
@@ -459,7 +443,7 @@ const Calendar = () => {
                       {/* num of day and today badge */}
                       <HStack>
                         <Box textAlign="center" fontSize="sm">
-                          {listOfCalendarDays[i * 7 + j].getDate()}
+                          {listOfCalendarDays[i * 7 + j].day}
                         </Box>
                         {isToday(listOfCalendarDays[i * 7 + j]) ? (
                           <Badge colorScheme="red">Today</Badge>
@@ -471,8 +455,8 @@ const Calendar = () => {
                       {/* event buttons */}
                       {calendarEvents
                         .filter(
-                          (e) =>
-                            e.start_date ===
+                          (event: EventData) =>
+                            event.start_date ===
                             toDateString(listOfCalendarDays[i * 7 + j])
                         )
                         .map((event: EventData) => (
@@ -481,11 +465,7 @@ const Calendar = () => {
 
                       {/* add event trigger space */}
                       <EventAddButton
-                        defaultDate={{
-                          year: listOfCalendarDays[i * 7 + j].getFullYear(),
-                          month: listOfCalendarDays[i * 7 + j].getMonth(),
-                          day: listOfCalendarDays[i * 7 + j].getDate(),
-                        }}
+                        defaultDate={listOfCalendarDays[i * 7 + j]}
                       >
                         <Box h="100%" w="100%">
                           {" "}
@@ -519,13 +499,13 @@ const Calendar = () => {
             />
           </ButtonGroup>
           <Text fontWeight="bold" fontSize="3xl">
-            {calendarMonth.year} - {calendarMonth.month + 1}
+            {calendarMonth.year} - {calendarMonth.month}
           </Text>
           <Button
             onClick={() => {
               setCalendarMonth({
-                year: today.getFullYear(),
-                month: today.getMonth(),
+                year: today.year,
+                month: today.month,
               });
             }}
             colorScheme="blue"
@@ -539,11 +519,11 @@ const Calendar = () => {
         <HStack spacing={8} pr={4}>
           <Box>
             <EventAddButton
-              defaultDate={{
-                year: calendarMonth.year,
-                month: calendarMonth.month,
-                day: 1,
-              }}
+              defaultDate={DateTime.local(
+                calendarMonth.year,
+                calendarMonth.month,
+                1
+              )}
             >
               <Button leftIcon={<AddIcon />} colorScheme="teal">
                 Add Event

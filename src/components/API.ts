@@ -1,6 +1,6 @@
 import { supabase } from "../libs/supabase";
 import { UserData, NewUserData, EventData, NewEventData } from "./Type";
-import moment from "moment";
+import { DateTime } from "luxon";
 
 export const fetchUserData = async (): Promise<UserData[]> => {
   const { data } = await supabase.from("user").select("*");
@@ -25,8 +25,7 @@ export const deleteUserData = async (userId: string) => {
     .match({ id: userId });
 };
 
-export const toDateString = (datetime: Date) =>
-  moment(datetime).format("YYYY-MM-DD");
+export const toDateString = (date: DateTime) => date.toFormat("yyyy-MM-dd");
 
 export const fetchEvent = async (
   year: number,
@@ -34,12 +33,10 @@ export const fetchEvent = async (
   day: number,
   days: number
 ): Promise<EventData[]> => {
-  const startDate = new Date(year, month - 1, day); // Date
-  const endDate = new Date(startDate.getTime() + days * 86400 * 1000);
-
+  const startDate = DateTime.local(year, month, day);
+  const endDate = startDate.plus({ days: days });
   const startDateString = toDateString(startDate);
   const endDateString = toDateString(endDate);
-
   const { data, error } = await supabase
     .from("event")
     .select("*")

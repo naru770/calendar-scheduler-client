@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Heading,
@@ -57,6 +57,8 @@ const Setting = () => {
     name: "",
     color: "",
   });
+
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   const onOpenAlert = (id: string) => setOpenAlertId(id);
   const onCloseAlert = () => setOpenAlertId("");
@@ -238,7 +240,7 @@ const Setting = () => {
                       <AlertDialog
                         isOpen={user_data.id === openAlertId}
                         onClose={onCloseAlert}
-                        leastDestructiveRef={undefined}
+                        leastDestructiveRef={cancelRef}
                         autoFocus={false}
                         isCentered
                       >
@@ -253,7 +255,9 @@ const Setting = () => {
 
                             <AlertDialogFooter>
                               <ButtonGroup>
-                                <Button onClick={onCloseAlert}>Cancel</Button>
+                                <Button onClick={onCloseAlert} ref={cancelRef}>
+                                  Cancel
+                                </Button>
                                 <Button
                                   colorScheme="red"
                                   onClick={() => {
