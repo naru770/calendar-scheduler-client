@@ -2,6 +2,17 @@ import { supabase } from "../libs/supabase";
 import { UserData, NewUserData, EventData, NewEventData } from "./Type";
 import { DateTime } from "luxon";
 
+export const isToday = (date: DateTime): Boolean => {
+  const today = DateTime.now();
+  return (
+    date.year === today.year &&
+    date.month === today.month &&
+    date.day === today.day
+  );
+};
+
+export const toDateString = (date: DateTime) => date.toFormat("yyyy-MM-dd");
+
 export const fetchUserData = async (): Promise<UserData[]> => {
   const { data } = await supabase.from("user").select("*");
   return data as UserData[];
@@ -25,23 +36,34 @@ export const deleteUserData = async (userId: string) => {
     .match({ id: userId });
 };
 
-export const toDateString = (date: DateTime) => date.toFormat("yyyy-MM-dd");
+// export const fetchEvent = async (
+//   year: number,
+//   month: number,
+//   day: number,
+//   days: number
+// ): Promise<EventData[]> => {
+//   const startDate = DateTime.local(year, month, day);
+//   const endDate = startDate.plus({ days: days });
+//   const startDateString = toDateString(startDate);
+//   const endDateString = toDateString(endDate);
+//   const { data, error } = await supabase
+//     .from("event")
+//     .select("*")
+//     .gte("start_date", startDateString)
+//     .lte("start_date", endDateString);
+
+//   return data as EventData[];
+// };
 
 export const fetchEvent = async (
-  year: number,
-  month: number,
-  day: number,
+  firstDay: DateTime,
   days: number
 ): Promise<EventData[]> => {
-  const startDate = DateTime.local(year, month, day);
-  const endDate = startDate.plus({ days: days });
-  const startDateString = toDateString(startDate);
-  const endDateString = toDateString(endDate);
   const { data, error } = await supabase
     .from("event")
     .select("*")
-    .gte("start_date", startDateString)
-    .lte("start_date", endDateString);
+    .gte("start_date", toDateString(firstDay))
+    .lte("start_date", toDateString(firstDay.plus({ days: days })));
 
   return data as EventData[];
 };
