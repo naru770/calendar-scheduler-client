@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Button,
   ButtonGroup,
-  Box,
   Spacer,
   HStack,
   Text,
@@ -15,11 +14,19 @@ import {
   SettingsIcon,
 } from "@chakra-ui/icons";
 import { Link } from "react-router-dom";
-import { CalendarMonth, EventData, UserData } from "./Type";
-import { fetchEvent, fetchUserData } from "./API";
-import { CalendarNavbar } from "./Navbar";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import { CalendarMonth, EventData, UserData } from "./Type";
+import {
+  fetchEvent,
+  fetchUserData,
+  createEvent,
+  modifyEvent,
+  deleteEvent,
+} from "./API";
 import CalendarTable from "./CalendarTable";
+import { queryClient } from "../index";
+import CalendarNavbar from "./CalendarNavbar";
 
 const Calendar = () => {
   const today = DateTime.now();
@@ -31,8 +38,6 @@ const Calendar = () => {
     month: today.month,
   });
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5);
-  const [calendarEvents, setCalendarEvents] = useState<EventData[]>([]);
-  const [userData, setUserData] = useState<UserData[]>([] as UserData[]);
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight);
 
   const firstDay: DateTime = DateTime.local(
@@ -45,17 +50,29 @@ const Calendar = () => {
     .fill(0)
     .map((_, i) => firstSquare.plus({ days: i }));
 
-  const loadEvents = () => {
-    fetchEvent(firstSquare, 7 * calendarRowsNum).then((r) =>
-      setCalendarEvents(r)
-    );
-  };
+  const { data: userData } = useQuery(["userData"], fetchUserData);
+  const { data: calendarEvents } = useQuery(
+    ["calendarEvents", firstSquare, calendarRowsNum],
+    () => fetchEvent(firstSquare, calendarRowsNum * 7)
+  );
 
-  const loadUser = () => {
-    fetchUserData().then((res) => {
-      setUserData(res);
-    });
-  };
+  const { mutate: mutateModifyEvent } = useMutation(modifyEvent, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["calendarEvents"]);
+    },
+  });
+
+  const { mutate: mutateCreateEvent } = useMutation(createEvent, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["calendarEvents"]);
+    },
+  });
+
+  const { mutate: mutateDeleteEvent } = useMutation(deleteEvent, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["calendarEvents"]);
+    },
+  });
 
   const setNextCalnedarMonth = () => {
     setCalendarMonth((prev: CalendarMonth) => {
@@ -79,87 +96,26 @@ const Calendar = () => {
     window.onresize = () => setInnerHeight(window.innerHeight);
   }, []);
 
-  useEffect(() => {
-    // finish loading of user data before registering event
-    (async () => {
-      if (userData.length === 0) {
-        console.log("fetchUserData!");
-        setUserData(await fetchUserData());
-      }
-
-      // setTimeout(loadEvents, 2000);
-      loadEvents();
-    })();
-  }, [calendarMonth, calendarRowsNum]);
-
-  const LocalCalendarNavbar = () => {
-    return (
-      <CalendarNavbar>
-        <HStack spacing={8}>
-          <ButtonGroup variant="outline" spacing="3">
-            <IconButton
-              onClick={setPrevCalendarMonth}
-              icon={<ChevronLeftIcon />}
-              colorScheme="blue"
-              aria-label="go to previous month"
-            />
-            <IconButton
-              onClick={setNextCalnedarMonth}
-              icon={<ChevronRightIcon />}
-              colorScheme="blue"
-              aria-label="go to next month"
-            />
-          </ButtonGroup>
-          <VStack spacing={0}>
-            <Text fontWeight="bold" fontSize="sm">
-              {calendarMonth.year}年
-            </Text>
-            <Text fontWeight="bold" fontSize="2xl">
-              {calendarMonth.month}月
-            </Text>
-          </VStack>
-          <Button
-            onClick={() => {
-              setCalendarMonth({
-                year: today.year,
-                month: today.month,
-              });
-            }}
-            colorScheme="blue"
-          >
-            Today
-          </Button>
-        </HStack>
-
-        <Spacer />
-
-        <HStack spacing={8} pr={4}>
-          <Link to="/setting">
-            <Button
-              leftIcon={<SettingsIcon />}
-              colorScheme="blue"
-              variant="outline"
-            >
-              Setting
-            </Button>
-          </Link>
-        </HStack>
-      </CalendarNavbar>
-    );
-  };
-
   return (
     <>
-      <LocalCalendarNavbar />
+      <CalendarNavbar
+        setNextCalnedarMonth={setNextCalnedarMonth}
+        setPrevCalendarMonth={setPrevCalendarMonth}
+        today={today}
+        calendarMonth={calendarMonth}
+        setCalendarMonth={setCalendarMonth}
+      />
       <CalendarTable
         innerHeight={innerHeight}
-        userData={userData}
-        calendarEvents={calendarEvents}
+        userData={userData === undefined ? [] : userData}
+        calendarEvents={calendarEvents === undefined ? [] : calendarEvents}
         weekName={weekName}
         calendarRowsNum={calendarRowsNum}
         weekNameHeight={weekNameHeight}
         calendarDays={calendarDays}
-        loadEvents={loadEvents}
+        mutateCreateEvent={mutateCreateEvent}
+        mutateModifyEvent={mutateModifyEvent}
+        mutateDeleteEvent={mutateDeleteEvent}
       />
     </>
   );

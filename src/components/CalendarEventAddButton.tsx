@@ -14,20 +14,22 @@ import {
   PopoverCloseButton,
   Checkbox,
 } from "@chakra-ui/react";
-import { NewEventData, UserData } from "./Type";
+import { NewEventData, UserData, EventData } from "./Type";
 import { createEvent, toDateString } from "./API";
 import { DateTime } from "luxon";
+import { UseMutateFunction } from "@tanstack/react-query";
+
 interface EventAddButtonProps {
   userData: UserData[];
   children: React.ReactNode;
   defaultDate: DateTime;
-  loadEvents: () => void;
+  mutateCreateEvent: UseMutateFunction<void, unknown, NewEventData, unknown>;
 }
 
 const CalendarEventAddButton = ({
   children,
   defaultDate,
-  loadEvents,
+  mutateCreateEvent,
   userData,
 }: EventAddButtonProps) => {
   interface Form {
@@ -61,9 +63,7 @@ const CalendarEventAddButton = ({
       is_timed: form.is_timed,
       user_id: user_id,
     };
-    console.log(newData);
-    await createEvent(newData);
-    loadEvents();
+    mutateCreateEvent(newData);
   };
 
   return (

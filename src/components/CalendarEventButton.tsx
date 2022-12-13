@@ -18,17 +18,20 @@ import {
 } from "@chakra-ui/react";
 import { EventData, UserData } from "./Type";
 import { modifyEvent, deleteEvent } from "./API";
+import { UseMutateFunction } from "@tanstack/react-query";
 
 interface CalendarEventButtonProps {
   event: EventData;
   userData: UserData[];
-  loadEvents: () => void;
+  mutateModifyEvent: UseMutateFunction<void, unknown, EventData, unknown>;
+  mutateDeleteEvent: UseMutateFunction<void, unknown, string, unknown>;
 }
 
 const CalendarEventButton = ({
   event,
   userData,
-  loadEvents,
+  mutateModifyEvent,
+  mutateDeleteEvent,
 }: CalendarEventButtonProps) => {
   interface Form {
     date: string;
@@ -58,13 +61,11 @@ const CalendarEventButton = ({
       is_timed: form.is_timed,
       user_id: user_id,
     };
-    await modifyEvent(newData);
-    loadEvents();
+    mutateModifyEvent(newData);
   };
 
   const deleteButton = async () => {
-    await deleteEvent(event.id);
-    loadEvents();
+    mutateDeleteEvent(event.id);
   };
 
   return (

@@ -36,25 +36,6 @@ export const deleteUserData = async (userId: string) => {
     .match({ id: userId });
 };
 
-// export const fetchEvent = async (
-//   year: number,
-//   month: number,
-//   day: number,
-//   days: number
-// ): Promise<EventData[]> => {
-//   const startDate = DateTime.local(year, month, day);
-//   const endDate = startDate.plus({ days: days });
-//   const startDateString = toDateString(startDate);
-//   const endDateString = toDateString(endDate);
-//   const { data, error } = await supabase
-//     .from("event")
-//     .select("*")
-//     .gte("start_date", startDateString)
-//     .lte("start_date", endDateString);
-
-//   return data as EventData[];
-// };
-
 export const fetchEvent = async (
   firstDay: DateTime,
   days: number

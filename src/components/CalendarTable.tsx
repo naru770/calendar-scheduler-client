@@ -1,8 +1,9 @@
 import { Flex, Box, HStack, VStack, Badge } from "@chakra-ui/react";
-import { EventData, UserData } from "./Type";
-import { toDateString, isToday } from "./API";
-import { CalendarNavbar, navbarHeight } from "./Navbar";
+import { UseMutateFunction } from "@tanstack/react-query";
 import { DateTime } from "luxon";
+import { EventData, UserData, NewEventData } from "./Type";
+import { toDateString, isToday } from "./API";
+import { navbarHeight } from "./Navbar";
 import CalendarEventButton from "./CalendarEventButton";
 import CalendarEventAddButton from "./CalendarEventAddButton";
 
@@ -14,7 +15,9 @@ interface CalendarTableProps {
   calendarRowsNum: number;
   calendarEvents: EventData[];
   userData: UserData[];
-  loadEvents: () => void;
+  mutateCreateEvent: UseMutateFunction<void, unknown, NewEventData, unknown>;
+  mutateModifyEvent: UseMutateFunction<void, unknown, EventData, unknown>;
+  mutateDeleteEvent: UseMutateFunction<void, unknown, string, unknown>;
 }
 
 const CalendarTable = ({
@@ -23,9 +26,11 @@ const CalendarTable = ({
   weekName,
   calendarRowsNum,
   calendarEvents,
-  loadEvents,
   userData,
   innerHeight,
+  mutateCreateEvent,
+  mutateModifyEvent,
+  mutateDeleteEvent,
 }: CalendarTableProps) => {
   return (
     <Box>
@@ -97,16 +102,17 @@ const CalendarTable = ({
                       .map((event: EventData) => (
                         <CalendarEventButton
                           userData={userData}
-                          loadEvents={loadEvents}
                           event={event}
                           key={event.id}
+                          mutateModifyEvent={mutateModifyEvent}
+                          mutateDeleteEvent={mutateDeleteEvent}
                         />
                       ))}
 
                     {/* add event trigger space */}
                     <CalendarEventAddButton
                       defaultDate={calendarDays[i * 7 + j]}
-                      loadEvents={loadEvents}
+                      mutateCreateEvent={mutateCreateEvent}
                       userData={userData}
                     >
                       <Box h="100%" w="100%">

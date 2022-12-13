@@ -1,12 +1,12 @@
 import { Flex, Box, Heading, Spacer, HStack } from "@chakra-ui/react";
 
-type Props = {
+interface NavbarProps {
   children: React.ReactNode;
-};
+}
 
 export const navbarHeight = 55;
 
-export const CalendarNavbar: React.VFC<Props> = ({ children }) => {
+export const Navbar = ({ children }: NavbarProps) => {
   return (
     <Box boxShadow="md">
       <Flex

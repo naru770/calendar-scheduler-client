@@ -41,7 +41,7 @@ import {
   modifyUserData,
 } from "./API";
 import { UserData, NewUserData } from "./Type";
-import { CalendarNavbar } from "./Navbar";
+import { Navbar } from "./Navbar";
 
 const Setting = () => {
   const [userData, setUserData] = useState<UserData[]>([] as UserData[]);
@@ -76,7 +76,7 @@ const Setting = () => {
 
   return (
     <>
-      <CalendarNavbar>
+      <Navbar>
         <HStack spacing={8} pr={4}>
           <Spacer />
           <Button
@@ -141,7 +141,7 @@ const Setting = () => {
             </Button>
           </Link>
         </HStack>
-      </CalendarNavbar>
+      </Navbar>
 
       <Container maxW="container.md">
         <Box pt="8" pb="8">
