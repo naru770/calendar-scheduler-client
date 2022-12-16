@@ -15,6 +15,6 @@ root.render(
     <ChakraProvider theme={theme}>
       <App />
     </ChakraProvider>
-    <ReactQueryDevtools initialIsOpen={true} />
+    <ReactQueryDevtools initialIsOpen={false} />
   </QueryClientProvider>
 );

@@ -1,19 +1,4 @@
 import { useState, useEffect } from "react";
-import {
-  Button,
-  ButtonGroup,
-  Spacer,
-  HStack,
-  Text,
-  VStack,
-  IconButton,
-} from "@chakra-ui/react";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  SettingsIcon,
-} from "@chakra-ui/icons";
-import { Link } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { CalendarMonth, EventData, UserData } from "./Type";
@@ -108,7 +93,11 @@ const Calendar = () => {
       <CalendarTable
         innerHeight={innerHeight}
         userData={userData === undefined ? [] : userData}
-        calendarEvents={calendarEvents === undefined ? [] : calendarEvents}
+        calendarEvents={
+          calendarEvents === undefined || userData === undefined
+            ? []
+            : calendarEvents
+        }
         weekName={weekName}
         calendarRowsNum={calendarRowsNum}
         weekNameHeight={weekNameHeight}

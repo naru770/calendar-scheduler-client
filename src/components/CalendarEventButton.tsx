@@ -17,7 +17,6 @@ import {
   Checkbox,
 } from "@chakra-ui/react";
 import { EventData, UserData } from "./Type";
-import { modifyEvent, deleteEvent } from "./API";
 import { UseMutateFunction } from "@tanstack/react-query";
 
 interface CalendarEventButtonProps {
