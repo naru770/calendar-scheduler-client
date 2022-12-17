@@ -31,9 +31,10 @@ import {
   Spacer,
   HStack,
   Container,
+  IconButton,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { AddIcon, CalendarIcon } from "@chakra-ui/icons";
+import { AddIcon, CalendarIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import {
   deleteUserData,
   fetchUserData,
@@ -79,13 +80,12 @@ const Setting = () => {
       <Navbar>
         <HStack spacing={8} pr={4}>
           <Spacer />
-          <Button
-            colorScheme="teal"
-            leftIcon={<AddIcon />}
+          <IconButton
             onClick={signupForm.onOpen}
-          >
-            Add User
-          </Button>
+            icon={<AddIcon />}
+            colorScheme="blue"
+            aria-label="go to next month"
+          />
 
           <Modal isOpen={signupForm.isOpen} onClose={signupForm.onClose}>
             <ModalOverlay />
@@ -132,13 +132,12 @@ const Setting = () => {
           </Modal>
 
           <Link to="/">
-            <Button
-              colorScheme="blue"
+            <IconButton
               variant="outline"
-              leftIcon={<CalendarIcon />}
-            >
-              Calendar
-            </Button>
+              icon={<CalendarIcon />}
+              colorScheme="blue"
+              aria-label="go to next month"
+            />
           </Link>
         </HStack>
       </Navbar>
@@ -158,25 +157,25 @@ const Setting = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {userData.map((user_data: UserData, i) => (
-                <Tr key={user_data.id}>
-                  <Td>{user_data.id.slice(0, 4)}...</Td>
-                  <Td>{user_data.name}</Td>
-                  <Td>{user_data.color}</Td>
+              {userData.map((userData: UserData, i) => (
+                <Tr key={userData.id}>
+                  <Td>{userData.id.slice(0, 4)}...</Td>
+                  <Td>{userData.name}</Td>
+                  <Td>{userData.color}</Td>
                   <Td>
                     <ButtonGroup>
-                      <Button
-                        colorScheme="teal"
+                      <IconButton
                         onClick={() => {
-                          onOpenEditModal(user_data.id);
-                          setUpdatedUserData(user_data);
+                          onOpenEditModal(userData.id);
+                          setUpdatedUserData(userData);
                         }}
-                      >
-                        Edit
-                      </Button>
+                        icon={<EditIcon />}
+                        colorScheme="teal"
+                        aria-label="go to next month"
+                      />
 
                       <Modal
-                        isOpen={user_data.id === openEditModalId}
+                        isOpen={userData.id === openEditModalId}
                         onClose={onCloseEditModal}
                       >
                         <ModalOverlay />
@@ -187,7 +186,7 @@ const Setting = () => {
                             <FormControl pb="6">
                               <FormLabel>Username</FormLabel>
                               <Input
-                                defaultValue={user_data.name}
+                                defaultValue={userData.name}
                                 onChange={(e) => {
                                   setUpdatedUserData({
                                     ...updatedUserData,
@@ -200,7 +199,7 @@ const Setting = () => {
                             <FormControl>
                               <FormLabel>Color</FormLabel>
                               <Input
-                                defaultValue={user_data.color}
+                                defaultValue={userData.color}
                                 onChange={(e) => {
                                   setUpdatedUserData({
                                     ...updatedUserData,
@@ -230,15 +229,15 @@ const Setting = () => {
                         </ModalContent>
                       </Modal>
 
-                      <Button
+                      <IconButton
+                        onClick={() => onOpenAlert(userData.id)}
+                        icon={<DeleteIcon />}
                         colorScheme="red"
-                        onClick={() => onOpenAlert(user_data.id)}
-                      >
-                        Del
-                      </Button>
+                        aria-label="go to next month"
+                      />
 
                       <AlertDialog
-                        isOpen={user_data.id === openAlertId}
+                        isOpen={userData.id === openAlertId}
                         onClose={onCloseAlert}
                         leastDestructiveRef={cancelRef}
                         autoFocus={false}
@@ -249,7 +248,7 @@ const Setting = () => {
                             <AlertDialogHeader>Warning</AlertDialogHeader>
 
                             <AlertDialogBody>
-                              Are you sure all {user_data.name}'s events will be
+                              Are you sure all {userData.name}'s events will be
                               deleted?
                             </AlertDialogBody>
 
@@ -261,7 +260,7 @@ const Setting = () => {
                                 <Button
                                   colorScheme="red"
                                   onClick={() => {
-                                    deleteUserData(user_data.id).then(() =>
+                                    deleteUserData(userData.id).then(() =>
                                       loadUserData()
                                     );
                                   }}

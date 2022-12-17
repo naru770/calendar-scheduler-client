@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverCloseButton,
   Checkbox,
+  Text,
 } from "@chakra-ui/react";
 import { EventData, UserData } from "./Type";
 import { UseMutateFunction } from "@tanstack/react-query";
@@ -68,7 +69,7 @@ const CalendarEventButton = ({
   };
 
   return (
-    <Popover placement="right" initialFocusRef={firstFieldRef}>
+    <Popover placement="bottom" initialFocusRef={firstFieldRef}>
       {({ isOpen, onClose }) => (
         <>
           <PopoverTrigger>
@@ -76,12 +77,15 @@ const CalendarEventButton = ({
               as="button"
               bg={userData.filter((data) => data.id === event.user_id)[0].color}
               color="white"
-              fontSize="sm"
+              // fontSize="sm"
+              fontSize={{ base: "12px", md: "sm" }}
               borderRadius="sm"
               w="97%"
             >
-              {event.is_timed ? event.start_time.slice(0, -3) + " " : ""}
-              {event.content}
+              <Text noOfLines={2} lineHeight={1.25}>
+                {event.is_timed ? event.start_time.slice(0, -3) + " " : ""}
+                {event.content}
+              </Text>
             </Box>
           </PopoverTrigger>
 

@@ -67,7 +67,7 @@ const CalendarEventAddButton = ({
   };
 
   return (
-    <Popover placement="right" initialFocusRef={firstFieldRef}>
+    <Popover placement="bottom" initialFocusRef={firstFieldRef}>
       {({ isOpen, onClose }) => (
         <>
           <PopoverTrigger>{children}</PopoverTrigger>
