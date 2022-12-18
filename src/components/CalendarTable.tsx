@@ -1,11 +1,20 @@
-import { Flex, Box, HStack, VStack, Badge } from "@chakra-ui/react";
+import { useState } from "react";
+import {
+  Flex,
+  Box,
+  HStack,
+  VStack,
+  Badge,
+  Text,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { UseMutateFunction } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { EventData, UserData, NewEventData } from "./Type";
 import { toDateString, isToday } from "./API";
 import { navbarHeight } from "./Navbar";
-import CalendarEventButton from "./CalendarEventButton";
-import CalendarEventAddButton from "./CalendarEventAddButton";
+import CalendarEditModal from "./CalendarEditModal";
+import CalendarAddModal from "./CalendarAddModal";
 
 interface CalendarTableProps {
   calendarDays: DateTime[];
@@ -32,6 +41,26 @@ const CalendarTable = ({
   mutateModifyEvent,
   mutateDeleteEvent,
 }: CalendarTableProps) => {
+  const {
+    isOpen: isOpenEditForm,
+    onOpen: onOpenEditForm,
+    onClose: onCloseEditForm,
+  } = useDisclosure();
+
+  const {
+    isOpen: isOpenAddForm,
+    onOpen: onOpenAddForm,
+    onClose: onCloseAddForm,
+  } = useDisclosure();
+
+  const [editFormData, setEditFormData] = useState<EventData | undefined>(
+    undefined
+  );
+
+  const [defaultDate, setDefaultDate] = useState<DateTime | undefined>(
+    undefined
+  );
+
   return (
     <Box>
       <Flex h={weekNameHeight + "px"}>
@@ -100,30 +129,73 @@ const CalendarTable = ({
                           toDateString(calendarDays[i * 7 + j])
                       )
                       .map((event: EventData) => (
-                        <CalendarEventButton
-                          userData={userData}
-                          event={event}
-                          key={event.id}
-                          mutateModifyEvent={mutateModifyEvent}
-                          mutateDeleteEvent={mutateDeleteEvent}
-                        />
+                        <Box
+                          as="button"
+                          bg={
+                            userData.filter(
+                              (data) => data.id === event.user_id
+                            )[0].color
+                          }
+                          color="white"
+                          fontSize={{ base: "12px", md: "sm" }}
+                          borderRadius="sm"
+                          w="97%"
+                          onClick={() => {
+                            setEditFormData(event);
+                            onOpenEditForm();
+                          }}
+                        >
+                          <Text noOfLines={2} lineHeight={1.25}>
+                            {event.is_timed
+                              ? event.start_time.slice(0, -3) + " "
+                              : ""}
+                            {event.content}
+                          </Text>
+                        </Box>
                       ))}
 
                     {/* add event trigger space */}
-                    <CalendarEventAddButton
-                      defaultDate={calendarDays[i * 7 + j]}
-                      mutateCreateEvent={mutateCreateEvent}
-                      userData={userData}
+                    <Box
+                      h="100%"
+                      w="100%"
+                      onClick={() => {
+                        setDefaultDate(
+                          DateTime.local(
+                            calendarDays[i * 7 + j].year,
+                            calendarDays[i * 7 + j].month,
+                            calendarDays[i * 7 + j].day
+                          )
+                        );
+                        onOpenAddForm();
+                      }}
                     >
-                      <Box h="100%" w="100%">
-                        {" "}
-                      </Box>
-                    </CalendarEventAddButton>
+                      {" "}
+                    </Box>
                   </VStack>
                 </Flex>
               ))}
           </Flex>
         ))}
+      {editFormData !== undefined && userData !== undefined ? (
+        <CalendarEditModal
+          isOpenEditForm={isOpenEditForm}
+          onCloseEditForm={onCloseEditForm}
+          event={editFormData}
+          userData={userData}
+          mutateModifyEvent={mutateModifyEvent}
+          mutateDeleteEvent={mutateDeleteEvent}
+        />
+      ) : undefined}
+
+      {defaultDate !== undefined && userData !== undefined ? (
+        <CalendarAddModal
+          isOpenAddForm={isOpenAddForm}
+          onCloseAddForm={onCloseAddForm}
+          userData={userData}
+          defaultDate={defaultDate}
+          mutateCreateEvent={mutateCreateEvent}
+        />
+      ) : undefined}
     </Box>
   );
 };

@@ -15,11 +15,9 @@ export const Navbar = ({ children }: NavbarProps) => {
         justifyContent={"space-between"}
         backgroundColor="#f9f9f9"
       >
-        <HStack spacing={8} display={{ base: "none", md: "block" }}>
-          <Box pl={4}>
-            <Heading size="md">Calendar</Heading>
-          </Box>
-        </HStack>
+        <Box pl={4} display={{ base: "none", md: "block" }}>
+          <Heading size="md">Calendar</Heading>
+        </Box>
 
         <Spacer />
 

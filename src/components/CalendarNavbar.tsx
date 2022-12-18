@@ -36,7 +36,7 @@ const CalendarNavbar = ({
 }: CalendarNavbarProps) => {
   return (
     <Navbar>
-      <HStack spacing={{ base: 1, lg: 8 }}>
+      <HStack spacing={{ base: 2, md: 8 }}>
         <IconButton
           variant="outline"
           onClick={setPrevCalendarMonth}
