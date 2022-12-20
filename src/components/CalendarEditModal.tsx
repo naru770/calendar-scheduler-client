@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { EventData, UserData } from "./Type";
 import { UseMutateFunction } from "@tanstack/react-query";
+import { useToast } from "@chakra-ui/react";
 
 interface CalendarEditModalProps {
   isOpenEditForm: boolean;
@@ -63,10 +64,6 @@ const CalendarEditModal = ({
     });
   }, [event]);
 
-  useEffect(() => {
-    console.log(form);
-  }, [form]);
-
   const firstFieldRef = useRef(null); // ref to event box dom
 
   const updateButton = async () => {
@@ -85,6 +82,8 @@ const CalendarEditModal = ({
   const deleteButton = async () => {
     mutateDeleteEvent(event.id);
   };
+
+  const toast = useToast();
 
   return (
     <Modal isOpen={isOpenEditForm} onClose={onCloseEditForm}>
@@ -163,6 +162,12 @@ const CalendarEditModal = ({
               colorScheme={"red"}
               onClick={async () => {
                 await deleteButton();
+                toast({
+                  title: "Event deleted.",
+                  status: "success",
+                  duration: 3000,
+                  isClosable: true,
+                });
                 onCloseEditForm();
               }}
             >
@@ -173,6 +178,12 @@ const CalendarEditModal = ({
               colorScheme={"blue"}
               onClick={async () => {
                 await updateButton();
+                toast({
+                  title: "Event updated.",
+                  status: "success",
+                  duration: 3000,
+                  isClosable: true,
+                });
                 onCloseEditForm();
               }}
             >

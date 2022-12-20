@@ -21,6 +21,7 @@ import {
 } from "@chakra-ui/react";
 import { EventData, UserData, NewEventData } from "./Type";
 import { toDateString } from "./API";
+import { useToast } from "@chakra-ui/react";
 
 interface CalendarAddModalProps {
   isOpenAddForm: boolean;
@@ -81,9 +82,7 @@ const CalendarAddModal = ({
     mutateCreateEvent(newData);
   };
 
-  useEffect(() => {
-    console.log(form);
-  }, [form]);
+  const toast = useToast();
 
   return (
     <Modal isOpen={isOpenAddForm} onClose={onCloseAddForm}>
@@ -152,6 +151,12 @@ const CalendarAddModal = ({
               colorScheme={"blue"}
               onClick={async () => {
                 await addButton();
+                toast({
+                  title: "Event added.",
+                  status: "success",
+                  duration: 3000,
+                  isClosable: true,
+                });
                 onCloseAddForm();
               }}
               disabled={!isReadyToSubmit()}
