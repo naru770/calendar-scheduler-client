@@ -25,12 +25,14 @@ const Calendar = () => {
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5);
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight);
 
-  const firstDay: DateTime = DateTime.local(
+  const firstDayOfMonth: DateTime = DateTime.local(
     calendarMonth.year,
     calendarMonth.month,
     1
   );
-  const firstSquare: DateTime = firstDay.minus({ days: firstDay.weekday });
+  const firstSquare: DateTime = firstDayOfMonth.minus({
+    days: firstDayOfMonth.weekday % 7,
+  });
   const calendarDays: DateTime[] = Array(7 * calendarRowsNum)
     .fill(0)
     .map((_, i) => firstSquare.plus({ days: i }));
