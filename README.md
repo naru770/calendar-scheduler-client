@@ -1,5 +1,5 @@
 ## 概要
-PCだけでなくスマホでもカレンダー表示ができるスケジュール共有アプリ
+PCとスマホでカレンダー表示ができるスケジュール共有アプリ
 
 <img src="https://user-images.githubusercontent.com/95570185/208721140-6d5dbab1-b383-4136-8031-8c2a587500dc.png">
 <img src="https://user-images.githubusercontent.com/95570185/208720983-e86c96b3-4533-418c-95ef-067ac694a5ac.png" width="300px">
