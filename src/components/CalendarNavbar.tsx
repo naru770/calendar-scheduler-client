@@ -1,23 +1,10 @@
-import {
-  Button,
-  ButtonGroup,
-  Spacer,
-  HStack,
-  Text,
-  VStack,
-  IconButton,
-} from "@chakra-ui/react";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  SettingsIcon,
-  StarIcon,
-} from "@chakra-ui/icons";
+import { Button, ButtonGroup, Spacer, HStack, Text, VStack, IconButton } from "@chakra-ui/react";
+import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon, StarIcon } from "@chakra-ui/icons";
 import { Link } from "react-router-dom";
-import { CalendarMonth } from "./Type";
+import type { CalendarMonth } from "./Type";
 
 import { Navbar } from "./Navbar";
-import { DateTime } from "luxon";
+import type { DateTime } from "luxon";
 
 interface CalendarNavbarProps {
   setPrevCalendarMonth: () => void;
@@ -80,12 +67,7 @@ const CalendarNavbar = ({
 
       <HStack spacing={8} pr={4}>
         <Link to="/setting">
-          <IconButton
-            variant="outline"
-            icon={<SettingsIcon />}
-            colorScheme="blue"
-            aria-label="go to setting"
-          />
+          <IconButton variant="outline" icon={<SettingsIcon />} colorScheme="blue" aria-label="go to setting" />
         </Link>
       </HStack>
     </Navbar>

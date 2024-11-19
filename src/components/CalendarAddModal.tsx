@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { UseMutateFunction } from "@tanstack/react-query";
-import { DateTime } from "luxon";
+import type { UseMutateFunction } from "@tanstack/react-query";
+import type { DateTime } from "luxon";
 import {
   Button,
   Flex,
@@ -19,7 +19,7 @@ import {
   ModalFooter,
   ModalOverlay,
 } from "@chakra-ui/react";
-import { EventData, UserData, NewEventData } from "./Type";
+import type { UserData, NewEventData } from "./Type";
 import { toDateString } from "./API";
 import { useToast } from "@chakra-ui/react";
 
@@ -94,9 +94,7 @@ const CalendarAddModal = ({
           <VStack spacing={4}>
             <FormControl>
               <FormLabel>User</FormLabel>
-              <Select
-                onChange={(e) => setForm({ ...form, user: e.target.value })}
-              >
+              <Select onChange={(e) => setForm({ ...form, user: e.target.value })}>
                 <option hidden>Select user</option>
                 {userData.map((data) => (
                   <option key={data.id}>{data.name}</option>
@@ -111,17 +109,12 @@ const CalendarAddModal = ({
                 type="date"
                 defaultValue={toDateString(defaultDate)}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
-              ></input>
+              />
             </FormControl>
 
             <FormControl>
               <FormLabel htmlFor="changeform-timepicker">
-                <Checkbox
-                  defaultChecked={false}
-                  onChange={(e) =>
-                    setForm({ ...form, is_timed: e.target.checked })
-                  }
-                >
+                <Checkbox defaultChecked={false} onChange={(e) => setForm({ ...form, is_timed: e.target.checked })}>
                   View Time
                 </Checkbox>
               </FormLabel>
@@ -131,15 +124,12 @@ const CalendarAddModal = ({
                 defaultValue={form.time}
                 onChange={(e) => setForm({ ...form, time: e.target.value })}
                 disabled={!form.is_timed}
-              ></input>
+              />
             </FormControl>
 
             <FormControl>
               <FormLabel>Content</FormLabel>
-              <Input
-                ref={firstFieldRef}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-              />
+              <Input ref={firstFieldRef} onChange={(e) => setForm({ ...form, content: e.target.value })} />
             </FormControl>
           </VStack>
         </ModalBody>

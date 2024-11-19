@@ -16,5 +16,5 @@ root.render(
       <App />
     </ChakraProvider>
     {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-  </QueryClientProvider>
+  </QueryClientProvider>,
 );

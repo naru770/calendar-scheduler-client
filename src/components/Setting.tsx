@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
   Heading,
@@ -35,13 +35,8 @@ import {
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { AddIcon, CalendarIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
-import {
-  deleteUserData,
-  fetchUserData,
-  createUserData,
-  modifyUserData,
-} from "./API";
-import { UserData, NewUserData } from "./Type";
+import { deleteUserData, fetchUserData, createUserData, modifyUserData } from "./API";
+import type { UserData, NewUserData } from "./Type";
 import { Navbar } from "./Navbar";
 
 const Setting = () => {
@@ -67,25 +62,20 @@ const Setting = () => {
   const onOpenEditModal = (id: string) => setOpenEditModalId(id);
   const onCloseEditModal = () => setOpenEditModalId("");
 
-  const loadUserData = () => {
+  const loadUserData = useCallback(() => {
     fetchUserData().then((r) => setUserData(r));
-  };
+  }, []);
 
   useEffect(() => {
     loadUserData();
-  }, []);
+  }, [loadUserData]);
 
   return (
     <>
       <Navbar>
         <HStack spacing={8} pr={4}>
           <Spacer />
-          <IconButton
-            onClick={signupForm.onOpen}
-            icon={<AddIcon />}
-            colorScheme="blue"
-            aria-label="go to next month"
-          />
+          <IconButton onClick={signupForm.onOpen} icon={<AddIcon />} colorScheme="blue" aria-label="go to next month" />
 
           <Modal isOpen={signupForm.isOpen} onClose={signupForm.onClose}>
             <ModalOverlay />
@@ -132,12 +122,7 @@ const Setting = () => {
           </Modal>
 
           <Link to="/">
-            <IconButton
-              variant="outline"
-              icon={<CalendarIcon />}
-              colorScheme="blue"
-              aria-label="go to next month"
-            />
+            <IconButton variant="outline" icon={<CalendarIcon />} colorScheme="blue" aria-label="go to next month" />
           </Link>
         </HStack>
       </Navbar>
@@ -153,7 +138,7 @@ const Setting = () => {
                 <Th>ID</Th>
                 <Th>Username</Th>
                 <Th>Color</Th>
-                <Th></Th>
+                <Th />
               </Tr>
             </Thead>
             <Tbody>
@@ -174,10 +159,7 @@ const Setting = () => {
                         aria-label="go to next month"
                       />
 
-                      <Modal
-                        isOpen={userData.id === openEditModalId}
-                        onClose={onCloseEditModal}
-                      >
+                      <Modal isOpen={userData.id === openEditModalId} onClose={onCloseEditModal}>
                         <ModalOverlay />
                         <ModalContent>
                           <ModalHeader>Edit Form</ModalHeader>
@@ -248,8 +230,7 @@ const Setting = () => {
                             <AlertDialogHeader>Warning</AlertDialogHeader>
 
                             <AlertDialogBody>
-                              Are you sure all {userData.name}'s events will be
-                              deleted?
+                              Are you sure all {userData.name}'s events will be deleted?
                             </AlertDialogBody>
 
                             <AlertDialogFooter>
@@ -260,9 +241,7 @@ const Setting = () => {
                                 <Button
                                   colorScheme="red"
                                   onClick={() => {
-                                    deleteUserData(userData.id).then(() =>
-                                      loadUserData()
-                                    );
+                                    deleteUserData(userData.id).then(() => loadUserData());
                                   }}
                                 >
                                   Delete

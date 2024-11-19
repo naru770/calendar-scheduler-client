@@ -17,8 +17,8 @@ import {
   ModalFooter,
   ModalOverlay,
 } from "@chakra-ui/react";
-import { EventData, UserData } from "./Type";
-import { UseMutateFunction } from "@tanstack/react-query";
+import type { EventData, UserData } from "./Type";
+import type { UseMutateFunction } from "@tanstack/react-query";
 import { useToast } from "@chakra-ui/react";
 
 interface CalendarEditModalProps {
@@ -62,7 +62,7 @@ const CalendarEditModal = ({
       content: event.content,
       is_timed: event.is_timed,
     });
-  }, [event]);
+  }, [event, userData]);
 
   const firstFieldRef = useRef(null); // ref to event box dom
 
@@ -99,9 +99,7 @@ const CalendarEditModal = ({
                 onChange={(e) => {
                   setForm({ ...form, user: e.target.value });
                 }}
-                defaultValue={
-                  userData.filter((e) => e.id === event.user_id)[0].name
-                }
+                defaultValue={userData.filter((e) => e.id === event.user_id)[0].name}
               >
                 {userData.map((data) => (
                   <option key={data.id}>{data.name}</option>
@@ -118,7 +116,7 @@ const CalendarEditModal = ({
                 onChange={(e) => {
                   setForm({ ...form, date: e.target.value });
                 }}
-              ></input>
+              />
             </FormControl>
 
             <FormControl>
@@ -140,7 +138,7 @@ const CalendarEditModal = ({
                   setForm({ ...form, time: e.target.value });
                 }}
                 disabled={!form.is_timed}
-              ></input>
+              />
             </FormControl>
 
             <FormControl>

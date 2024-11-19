@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import { CalendarMonth, EventData, UserData } from "./Type";
-import {
-  fetchEvent,
-  fetchUserData,
-  createEvent,
-  modifyEvent,
-  deleteEvent,
-} from "./API";
+import type { CalendarMonth, EventData, UserData } from "./Type";
+import { fetchEvent, fetchUserData, createEvent, modifyEvent, deleteEvent } from "./API";
 import CalendarTable from "./CalendarTable";
 import { queryClient } from "../index";
 import CalendarNavbar from "./CalendarNavbar";
@@ -25,11 +19,7 @@ const Calendar = () => {
   const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5);
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight);
 
-  const firstDayOfMonth: DateTime = DateTime.local(
-    calendarMonth.year,
-    calendarMonth.month,
-    1
-  );
+  const firstDayOfMonth: DateTime = DateTime.local(calendarMonth.year, calendarMonth.month, 1);
   const firstSquare: DateTime = firstDayOfMonth.minus({
     days: firstDayOfMonth.weekday % 7,
   });
@@ -38,9 +28,8 @@ const Calendar = () => {
     .map((_, i) => firstSquare.plus({ days: i }));
 
   const { data: userData } = useQuery(["userData"], fetchUserData);
-  const { data: calendarEvents } = useQuery(
-    ["calendarEvents", firstSquare, calendarRowsNum],
-    () => fetchEvent(firstSquare, calendarRowsNum * 7)
+  const { data: calendarEvents } = useQuery(["calendarEvents", firstSquare, calendarRowsNum], () =>
+    fetchEvent(firstSquare, calendarRowsNum * 7),
   );
 
   const { mutate: mutateModifyEvent } = useMutation(modifyEvent, {
@@ -95,11 +84,7 @@ const Calendar = () => {
       <CalendarTable
         innerHeight={innerHeight}
         userData={userData === undefined ? [] : userData}
-        calendarEvents={
-          calendarEvents === undefined || userData === undefined
-            ? []
-            : calendarEvents
-        }
+        calendarEvents={calendarEvents === undefined || userData === undefined ? [] : calendarEvents}
         weekName={weekName}
         calendarRowsNum={calendarRowsNum}
         weekNameHeight={weekNameHeight}
