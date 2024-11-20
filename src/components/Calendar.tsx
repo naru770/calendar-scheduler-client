@@ -27,26 +27,33 @@ const Calendar = () => {
     .fill(0)
     .map((_, i) => firstSquare.plus({ days: i }));
 
-  const { data: userData } = useQuery(["userData"], fetchUserData);
-  const { data: calendarEvents } = useQuery(["calendarEvents", firstSquare, calendarRowsNum], () =>
-    fetchEvent(firstSquare, calendarRowsNum * 7),
-  );
+  const { data: userData } = useQuery({
+    queryKey: ["userData"],
+    queryFn: fetchUserData,
+  });
+  const { data: calendarEvents } = useQuery({
+    queryKey: ["calendarEvents", firstSquare, calendarRowsNum],
+    queryFn: () => fetchEvent(firstSquare, calendarRowsNum * 7),
+  });
 
-  const { mutate: mutateModifyEvent } = useMutation(modifyEvent, {
+  const { mutate: mutateModifyEvent } = useMutation({
+    mutationFn: modifyEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries(["calendarEvents"]);
+      queryClient.invalidateQueries({ queryKey: ["calendarEvents"] });
     },
   });
 
-  const { mutate: mutateCreateEvent } = useMutation(createEvent, {
+  const { mutate: mutateCreateEvent } = useMutation({
+    mutationFn: createEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries(["calendarEvents"]);
+      queryClient.invalidateQueries({ queryKey: ["calendarEvents"] });
     },
   });
 
-  const { mutate: mutateDeleteEvent } = useMutation(deleteEvent, {
+  const { mutate: mutateDeleteEvent } = useMutation({
+    mutationFn: deleteEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries(["calendarEvents"]);
+      queryClient.invalidateQueries({ queryKey: ["calendarEvents"] });
     },
   });
 
