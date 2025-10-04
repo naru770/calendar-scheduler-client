@@ -1,25 +1,29 @@
-import { useState, useRef, useEffect } from "react";
 import {
+  Box,
   Button,
-  Flex,
-  Spacer,
-  VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   Checkbox,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalContent,
-  ModalCloseButton,
-  ModalFooter,
-  ModalOverlay,
-} from "@chakra-ui/react";
-import type { EventData, UserData } from "./Type";
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+} from "@mui/material";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
 import type { UseMutateFunction } from "@tanstack/react-query";
-import { useToast } from "@chakra-ui/react";
+import { useEffect, useId, useRef, useState } from "react";
+import * as Snackbar from "./Snackbar";
+import type { EventData, UserData } from "./Type";
+
+dayjs.locale("ja");
 
 interface CalendarEditModalProps {
   isOpenEditForm: boolean;
@@ -83,55 +87,60 @@ const CalendarEditModal = ({
     mutateDeleteEvent(event.id);
   };
 
-  const toast = useToast();
+  const openSnackbar = Snackbar.useStore((state) => state.open);
+
+  const userSelectId = useId();
 
   return (
-    <Modal isOpen={isOpenEditForm} onClose={onCloseEditForm}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Edit Event</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={3}>
-            <FormControl>
-              <FormLabel>User</FormLabel>
+    <Dialog open={isOpenEditForm} onClose={onCloseEditForm} fullWidth>
+      <DialogTitle>Edit Event</DialogTitle>
+      <DialogContent>
+        <Box sx={{ paddingTop: 2 }}>
+          <Stack spacing={4}>
+            <FormControl sx={{ width: "100%" }}>
+              <InputLabel id={userSelectId}>User</InputLabel>
               <Select
+                labelId={userSelectId}
+                value={form.user}
+                label="User"
                 onChange={(e) => {
                   setForm({ ...form, user: e.target.value });
                 }}
                 defaultValue={userData.filter((e) => e.id === event.user_id)[0].name}
               >
                 {userData.map((data) => (
-                  <option key={data.id}>{data.name}</option>
+                  <MenuItem key={data.id} value={data.name}>
+                    {data.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
-
-            <FormControl>
-              <FormLabel htmlFor="changeform-datepicker">Date</FormLabel>
-              <input
-                id="changeform-datepicker"
-                type="date"
-                defaultValue={event.start_date}
-                onChange={(e) => {
-                  setForm({ ...form, date: e.target.value });
+            <LocalizationProvider dateAdapter={AdapterDayjs} dateFormats={{ year: "YYYY年" }}>
+              <DatePicker
+                label="Date"
+                format="YYYY-MM-DD"
+                value={dayjs(form.date)}
+                onChange={(pickerValue) => {
+                  const stringValue = pickerValue?.format("YYYY-MM-DD");
+                  if (stringValue) {
+                    setForm({ ...form, date: stringValue });
+                  }
                 }}
               />
-            </FormControl>
-
+            </LocalizationProvider>
             <FormControl>
-              <FormLabel htmlFor="changeform-timepicker">
-                <Checkbox
-                  defaultChecked={event.is_timed}
-                  onChange={(e) => {
-                    setForm({ ...form, is_timed: e.target.checked });
-                  }}
-                >
-                  View Time
-                </Checkbox>
-              </FormLabel>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    defaultChecked={event.is_timed}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setForm({ ...form, is_timed: e.target.checked });
+                    }}
+                  />
+                }
+                label="View Time"
+              />
               <input
-                id="changeform-timepicker"
                 type="time"
                 defaultValue={event.start_time}
                 onChange={(e) => {
@@ -140,57 +149,46 @@ const CalendarEditModal = ({
                 disabled={!form.is_timed}
               />
             </FormControl>
-
-            <FormControl>
-              <FormLabel>Content</FormLabel>
-              <Input
-                defaultValue={event.content}
-                ref={firstFieldRef}
-                onChange={(e) => {
-                  setForm({ ...form, content: e.target.value });
-                }}
-              />
-            </FormControl>
-          </VStack>
-        </ModalBody>
-
-        <ModalFooter>
-          <Flex w="full">
-            <Button
-              colorScheme={"red"}
-              onClick={async () => {
-                await deleteButton();
-                toast({
-                  title: "Event deleted.",
-                  status: "success",
-                  duration: 3000,
-                  isClosable: true,
-                });
-                onCloseEditForm();
+            <TextField
+              label="Content"
+              defaultValue={event.content}
+              ref={firstFieldRef}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setForm({ ...form, content: e.target.value });
               }}
-            >
-              Delete
-            </Button>
-            <Spacer />
-            <Button
-              colorScheme={"blue"}
-              onClick={async () => {
-                await updateButton();
-                toast({
-                  title: "Event updated.",
-                  status: "success",
-                  duration: 3000,
-                  isClosable: true,
-                });
-                onCloseEditForm();
-              }}
-            >
-              Save
-            </Button>
-          </Flex>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+            />
+          </Stack>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={async () => {
+            await deleteButton();
+            openSnackbar({
+              message: "Event deleted.",
+            });
+            onCloseEditForm();
+          }}
+        >
+          Delete
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={async () => {
+            await updateButton();
+            openSnackbar({
+              message: "Event updated.",
+            });
+            onCloseEditForm();
+          }}
+        >
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

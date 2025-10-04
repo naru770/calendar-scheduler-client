@@ -1,14 +1,14 @@
-import { Button, ButtonGroup, Spacer, HStack, Text, VStack, IconButton } from "@chakra-ui/react";
-import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon, StarIcon } from "@chakra-ui/icons";
+import { ChevronLeft, ChevronRight, Settings } from "@mui/icons-material";
+import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
+import type { DateTime } from "luxon";
 import { Link } from "react-router-dom";
-import type { CalendarMonth } from "./Type";
 
 import { Navbar } from "./Navbar";
-import type { DateTime } from "luxon";
+import type { CalendarMonth } from "./Type";
 
 interface CalendarNavbarProps {
   setPrevCalendarMonth: () => void;
-  setNextCalnedarMonth: () => void;
+  setNextCalendarMonth: () => void;
   today: DateTime;
   calendarMonth: CalendarMonth;
   setCalendarMonth: React.Dispatch<React.SetStateAction<CalendarMonth>>;
@@ -16,60 +16,49 @@ interface CalendarNavbarProps {
 
 const CalendarNavbar = ({
   setPrevCalendarMonth,
-  setNextCalnedarMonth,
+  setNextCalendarMonth,
   today,
   calendarMonth,
   setCalendarMonth,
 }: CalendarNavbarProps) => {
   return (
-    <Navbar>
-      <HStack spacing={{ base: 2, md: 8 }}>
-        <IconButton
-          variant="outline"
-          onClick={setPrevCalendarMonth}
-          icon={<ChevronLeftIcon />}
-          colorScheme="blue"
-          aria-label="go to previous month"
-        />
+    <Navbar justifyContent="space-between">
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Stack direction="row" spacing={0}>
+          <IconButton onClick={setPrevCalendarMonth} color="primary">
+            <ChevronLeft />
+          </IconButton>
+          <IconButton onClick={setNextCalendarMonth} color="primary">
+            <ChevronRight />
+          </IconButton>
+        </Stack>
 
-        <VStack spacing={0}>
-          <Text fontWeight="bold" fontSize="sm">
-            {calendarMonth.year}年
-          </Text>
-          <Text fontWeight="bold" fontSize={{ base: "sm", lg: "2xl" }}>
-            {calendarMonth.month}月
-          </Text>
-        </VStack>
+        <Typography variant="h5" sx={{ marginLeft: 2, width: "9rem" }}>
+          {calendarMonth.year}年 {calendarMonth.month}月
+        </Typography>
 
-        <IconButton
-          variant="outline"
-          onClick={setNextCalnedarMonth}
-          icon={<ChevronRightIcon />}
-          colorScheme="blue"
-          aria-label="go to next month"
-        />
-
-        <IconButton
+        <Button
+          color="primary"
+          variant="outlined"
+          sx={{ marginLeft: 2 }}
           onClick={() => {
             setCalendarMonth({
               year: today.year,
               month: today.month,
             });
           }}
-          variant="outline"
-          icon={<StarIcon />}
-          colorScheme="blue"
-          aria-label="go to setting"
-        />
-      </HStack>
+        >
+          今日
+        </Button>
+      </Box>
 
-      <Spacer />
-
-      <HStack spacing={8} pr={4}>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
         <Link to="/setting">
-          <IconButton variant="outline" icon={<SettingsIcon />} colorScheme="blue" aria-label="go to setting" />
+          <IconButton color="primary">
+            <Settings />
+          </IconButton>
         </Link>
-      </HStack>
+      </Box>
     </Navbar>
   );
 };

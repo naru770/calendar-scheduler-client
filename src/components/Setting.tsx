@@ -1,69 +1,48 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Add, CalendarMonth, Delete, Edit } from "@mui/icons-material";
 import {
   Box,
-  Heading,
-  TableContainer,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  Tr,
-  Td,
   Button,
-  ButtonGroup,
-  useDisclosure,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalOverlay,
-  ModalHeader,
-  FormControl,
-  FormLabel,
-  Input,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
-  Spacer,
-  HStack,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
-} from "@chakra-ui/react";
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AddIcon, CalendarIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
-import { deleteUserData, fetchUserData, createUserData, modifyUserData } from "./API";
-import type { UserData, NewUserData } from "./Type";
+import { useDisclosure } from "../libs/custom-hook";
+import { createUserData, deleteUserData, fetchUserData, modifyUserData } from "./API";
 import { Navbar } from "./Navbar";
+import type { NewUserData, UserData } from "./Type";
 
 const Setting = () => {
-  const [userData, setUserData] = useState<UserData[]>([] as UserData[]);
+  const [userData, setUserData] = useState<UserData[]>([]);
   const [newUserData, setNewUserData] = useState<NewUserData>({
     name: "",
     color: "",
   });
   const signupForm = useDisclosure();
-  const [openAlertId, setOpenAlertId] = useState<string>(""); // 削除警告を開いているユーザID
-  const [openEditModalId, setOpenEditModalId] = useState<string>(""); // 編集フォームを開いているユーザID
-  const [updatedUserData, setUpdatedUserData] = useState<UserData>({
+  const editForm = useDisclosure();
+  const deleteUserAlert = useDisclosure();
+  const [deleteUserId, setDeleteUserId] = useState<string>("");
+  const [editFormData, setEditFormData] = useState<UserData>({
     id: "",
     name: "",
     color: "",
   });
 
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  const onOpenAlert = (id: string) => setOpenAlertId(id);
-  const onCloseAlert = () => setOpenAlertId("");
-
-  const onOpenEditModal = (id: string) => setOpenEditModalId(id);
-  const onCloseEditModal = () => setOpenEditModalId("");
-
-  const loadUserData = useCallback(() => {
-    fetchUserData().then((r) => setUserData(r));
+  const loadUserData = useCallback(async () => {
+    setUserData(await fetchUserData());
   }, []);
 
   useEffect(() => {
@@ -72,193 +51,159 @@ const Setting = () => {
 
   return (
     <>
-      <Navbar>
-        <HStack spacing={8} pr={4}>
-          <Spacer />
-          <IconButton onClick={signupForm.onOpen} icon={<AddIcon />} colorScheme="blue" aria-label="go to next month" />
+      <Navbar justifyContent="right">
+        <IconButton onClick={signupForm.onOpen} color="primary">
+          <Add />
+        </IconButton>
 
-          <Modal isOpen={signupForm.isOpen} onClose={signupForm.onClose}>
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>Register Form</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                <FormControl pb="6">
-                  <FormLabel>Username</FormLabel>
-                  <Input
-                    onChange={(e) => {
-                      setNewUserData({ ...newUserData, name: e.target.value });
-                    }}
-                  />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel>Color</FormLabel>
-                  <Input
-                    onChange={(e) => {
-                      setNewUserData({ ...newUserData, color: e.target.value });
-                    }}
-                  />
-                </FormControl>
-              </ModalBody>
-
-              <ModalFooter>
-                <ButtonGroup>
-                  <Button
-                    colorScheme="blue"
-                    onClick={() => {
-                      createUserData(newUserData).then((e) => {
-                        loadUserData();
-                        signupForm.onClose();
-                      });
-                    }}
-                  >
-                    Register
-                  </Button>
-                  <Button onClick={signupForm.onClose}>Cancel</Button>
-                </ButtonGroup>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
-
-          <Link to="/">
-            <IconButton variant="outline" icon={<CalendarIcon />} colorScheme="blue" aria-label="go to next month" />
-          </Link>
-        </HStack>
+        <Link to="/">
+          <IconButton color="primary">
+            <CalendarMonth />
+          </IconButton>
+        </Link>
       </Navbar>
 
-      <Container maxW="container.md">
-        <Box pt="8" pb="8">
-          <Heading color="blue.800">User Administration</Heading>
+      <Container maxWidth="md">
+        <Box sx={{ marginTop: 4, marginBottom: 4 }}>
+          <Typography variant="h4">User Administration</Typography>
         </Box>
         <TableContainer>
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>ID</Th>
-                <Th>Username</Th>
-                <Th>Color</Th>
-                <Th />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {userData.map((userData: UserData, i) => (
-                <Tr key={userData.id}>
-                  <Td>{userData.id.slice(0, 4)}...</Td>
-                  <Td>{userData.name}</Td>
-                  <Td>{userData.color}</Td>
-                  <Td>
-                    <ButtonGroup>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>Color</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {userData.map((userData: UserData) => (
+                <TableRow key={userData.id}>
+                  <TableCell>{userData.id.slice(0, 4)}...</TableCell>
+                  <TableCell>{userData.name}</TableCell>
+                  <TableCell>{userData.color}</TableCell>
+                  <TableCell>
+                    <Box>
+                      <IconButton
+                        color="primary"
+                        onClick={() => {
+                          editForm.onOpen();
+                          setEditFormData(userData);
+                        }}
+                      >
+                        <Edit />
+                      </IconButton>
+
                       <IconButton
                         onClick={() => {
-                          onOpenEditModal(userData.id);
-                          setUpdatedUserData(userData);
+                          setDeleteUserId(userData.id);
+                          deleteUserAlert.onOpen();
                         }}
-                        icon={<EditIcon />}
-                        colorScheme="teal"
-                        aria-label="go to next month"
-                      />
-
-                      <Modal isOpen={userData.id === openEditModalId} onClose={onCloseEditModal}>
-                        <ModalOverlay />
-                        <ModalContent>
-                          <ModalHeader>Edit Form</ModalHeader>
-                          <ModalCloseButton />
-                          <ModalBody>
-                            <FormControl pb="6">
-                              <FormLabel>Username</FormLabel>
-                              <Input
-                                defaultValue={userData.name}
-                                onChange={(e) => {
-                                  setUpdatedUserData({
-                                    ...updatedUserData,
-                                    name: e.target.value,
-                                  });
-                                }}
-                              />
-                            </FormControl>
-
-                            <FormControl>
-                              <FormLabel>Color</FormLabel>
-                              <Input
-                                defaultValue={userData.color}
-                                onChange={(e) => {
-                                  setUpdatedUserData({
-                                    ...updatedUserData,
-                                    color: e.target.value,
-                                  });
-                                }}
-                              />
-                            </FormControl>
-                          </ModalBody>
-
-                          <ModalFooter>
-                            <ButtonGroup>
-                              <Button
-                                colorScheme="blue"
-                                onClick={() => {
-                                  modifyUserData(updatedUserData).then((e) => {
-                                    onCloseEditModal();
-                                    loadUserData();
-                                  });
-                                }}
-                              >
-                                Save
-                              </Button>
-                              <Button onClick={onCloseEditModal}>Cancel</Button>
-                            </ButtonGroup>
-                          </ModalFooter>
-                        </ModalContent>
-                      </Modal>
-
-                      <IconButton
-                        onClick={() => onOpenAlert(userData.id)}
-                        icon={<DeleteIcon />}
-                        colorScheme="red"
-                        aria-label="go to next month"
-                      />
-
-                      <AlertDialog
-                        isOpen={userData.id === openAlertId}
-                        onClose={onCloseAlert}
-                        leastDestructiveRef={cancelRef}
-                        autoFocus={false}
-                        isCentered
                       >
-                        <AlertDialogOverlay>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>Warning</AlertDialogHeader>
-
-                            <AlertDialogBody>
-                              Are you sure all {userData.name}'s events will be deleted?
-                            </AlertDialogBody>
-
-                            <AlertDialogFooter>
-                              <ButtonGroup>
-                                <Button onClick={onCloseAlert} ref={cancelRef}>
-                                  Cancel
-                                </Button>
-                                <Button
-                                  colorScheme="red"
-                                  onClick={() => {
-                                    deleteUserData(userData.id).then(() => loadUserData());
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              </ButtonGroup>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialogOverlay>
-                      </AlertDialog>
-                    </ButtonGroup>
-                  </Td>
-                </Tr>
+                        <Delete />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
               ))}
-            </Tbody>
+            </TableBody>
           </Table>
         </TableContainer>
       </Container>
+
+      <Dialog open={editForm.isOpen} onClose={editForm.onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ marginTop: 2 }}>
+            <TextField
+              label="Username"
+              defaultValue={editFormData.name}
+              onChange={(e) => {
+                setEditFormData((data) => ({
+                  ...data,
+                  name: e.target.value,
+                }));
+              }}
+            />
+            <TextField
+              label="Color"
+              defaultValue={editFormData.color}
+              onChange={(e) => {
+                setEditFormData((data) => ({
+                  ...data,
+                  color: e.target.value,
+                }));
+              }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={editForm.onClose}>Cancel</Button>
+          <Button
+            color="primary"
+            variant="contained"
+            onClick={async () => {
+              await modifyUserData(editFormData);
+              loadUserData();
+              editForm.onClose();
+            }}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteUserAlert.isOpen} onClose={deleteUserAlert.onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Warning</DialogTitle>
+        <DialogContent>
+          {userData.find((user) => user.id === deleteUserId)?.name}{" "}
+          のユーザーとイベントは全て削除されます。よろしいですか？
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={deleteUserAlert.onClose}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={async () => {
+              await deleteUserData(deleteUserId);
+              loadUserData();
+              deleteUserAlert.onClose();
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={signupForm.isOpen} onClose={signupForm.onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Register</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ marginTop: 2 }}>
+            <TextField
+              label="Username"
+              onChange={(e) => {
+                setNewUserData((data) => ({ ...data, name: e.target.value }));
+              }}
+            />
+            <TextField label="Color" onChange={(e) => setNewUserData((data) => ({ ...data, color: e.target.value }))} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={signupForm.onClose}>Cancel</Button>
+          <Button
+            color="primary"
+            variant="contained"
+            onClick={async () => {
+              await createUserData(newUserData);
+              loadUserData();
+              signupForm.onClose();
+            }}
+          >
+            Register
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
