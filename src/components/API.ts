@@ -1,6 +1,6 @@
-import { supabase } from "../libs/supabase";
-import type { UserData, NewUserData, EventData, NewEventData } from "./Type";
 import { DateTime } from "luxon";
+import { supabase } from "../libs/supabase";
+import type { EventData, NewEventData, NewUserData, UserData } from "./Type";
 
 export const isToday = (date: DateTime): boolean => {
   const today = DateTime.now();
@@ -15,19 +15,19 @@ export const fetchUserData = async (): Promise<UserData[]> => {
 };
 
 export const createUserData = async (user: NewUserData) => {
-  const { data, error } = await supabase.from("user").insert(user);
+  await supabase.from("user").insert(user);
 };
 
 export const modifyUserData = async (user: UserData) => {
-  const { data, error } = await supabase.from("user").update(user).match({ id: user.id });
+  await supabase.from("user").update(user).match({ id: user.id });
 };
 
 export const deleteUserData = async (userId: string) => {
-  const { data, error } = await supabase.from("user").delete().match({ id: userId });
+  await supabase.from("user").delete().match({ id: userId });
 };
 
 export const fetchEvent = async (firstDay: DateTime, days: number): Promise<EventData[]> => {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("event")
     .select("*")
     .gte("start_date", toDateString(firstDay))

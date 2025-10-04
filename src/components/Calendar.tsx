@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import type { CalendarMonth, EventData, UserData } from "./Type";
-import { fetchEvent, fetchUserData, createEvent, modifyEvent, deleteEvent } from "./API";
-import CalendarTable from "./CalendarTable";
+import { useEffect, useState } from "react";
 import { queryClient } from "../index";
+import { createEvent, deleteEvent, fetchEvent, fetchUserData, modifyEvent } from "./API";
 import CalendarNavbar from "./CalendarNavbar";
+import CalendarTable from "./CalendarTable";
+import type { CalendarMonth } from "./Type";
 
 const Calendar = () => {
   const today = DateTime.now();
@@ -16,7 +16,7 @@ const Calendar = () => {
     year: today.year,
     month: today.month,
   });
-  const [calendarRowsNum, setCalendarRowsNum] = useState<number>(5);
+  const [calendarRowsNum, _] = useState<number>(5);
   const [innerHeight, setInnerHeight] = useState<number>(window.innerHeight);
 
   const firstDayOfMonth: DateTime = DateTime.local(calendarMonth.year, calendarMonth.month, 1);
@@ -57,7 +57,7 @@ const Calendar = () => {
     },
   });
 
-  const setNextCalnedarMonth = () => {
+  const setNextCalendarMonth = () => {
     setCalendarMonth((prev: CalendarMonth) => {
       const nextMonth = DateTime.local(prev.year, prev.month, 1).plus({
         months: 1,
@@ -82,7 +82,7 @@ const Calendar = () => {
   return (
     <>
       <CalendarNavbar
-        setNextCalnedarMonth={setNextCalnedarMonth}
+        setNextCalendarMonth={setNextCalendarMonth}
         setPrevCalendarMonth={setPrevCalendarMonth}
         today={today}
         calendarMonth={calendarMonth}

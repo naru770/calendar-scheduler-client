@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { Flex, Box, HStack, VStack, Badge, Text, useDisclosure } from "@chakra-ui/react";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import { DateTime } from "luxon";
-import type { EventData, UserData, NewEventData } from "./Type";
-import { toDateString, isToday } from "./API";
-import { navbarHeight } from "./Navbar";
-import CalendarEditModal from "./CalendarEditModal";
+import { useState } from "react";
+import { useDisclosure } from "../libs/custom-hook";
+import { isToday, toDateString } from "./API";
 import CalendarAddModal from "./CalendarAddModal";
+import CalendarEditModal from "./CalendarEditModal";
+import { navbarHeight } from "./Navbar";
+import type { EventData, NewEventData, UserData } from "./Type";
 
 interface CalendarTableProps {
   calendarDays: DateTime[];
@@ -34,109 +35,107 @@ const CalendarTable = ({
   mutateDeleteEvent,
 }: CalendarTableProps) => {
   const { isOpen: isOpenEditForm, onOpen: onOpenEditForm, onClose: onCloseEditForm } = useDisclosure();
-
   const { isOpen: isOpenAddForm, onOpen: onOpenAddForm, onClose: onCloseAddForm } = useDisclosure();
 
   const [editFormData, setEditFormData] = useState<EventData | undefined>(undefined);
-
   const [defaultDate, setDefaultDate] = useState<DateTime | undefined>(undefined);
 
   return (
-    <Box>
-      <Flex h={`${weekNameHeight}px`}>
+    <>
+      <Box sx={{ display: "flex", height: `${weekNameHeight}px` }}>
         {weekName.map((w, i) => (
-          <Flex
-            grow={1}
-            basis={1}
-            justifyContent="center"
-            borderLeft={i === 0 ? "1px" : undefined}
-            borderRight="1px"
-            borderTop="1px"
-            borderColor="#dadce0"
+          <Box
+            sx={{
+              display: "flex",
+              flexGrow: 1,
+              flexBasis: 1,
+              borderLeft: i === 0 ? "1px" : undefined,
+              borderRight: "1px",
+              borderBottom: "1px",
+              borderColor: "#dadce0",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
             key={w}
           >
             <Box fontSize="sm">{w}</Box>
-          </Flex>
+          </Box>
         ))}
-      </Flex>
-      {Array(calendarRowsNum)
-        .fill(0)
-        .map((_, i) => (
-          // calendar row
-          // biome-ignore lint/suspicious/noArrayIndexKey: カレンダーの行配列は静的であるため
-          <Flex h={`${Math.floor((innerHeight - (navbarHeight + weekNameHeight)) / calendarRowsNum - 1)}px`} key={i}>
-            {Array(7)
-              .fill(0)
-              .map((_, j) => (
-                // calendar cell
-                <Flex
-                  grow={1}
-                  basis={1}
-                  borderLeft={j === 0 ? "1px" : undefined}
-                  borderRight="1px"
-                  borderBottom="1px"
-                  borderColor="#dadce0"
-                  // biome-ignore lint/suspicious/noArrayIndexKey: カレンダーの列配列は静的であるため
-                  key={j}
+      </Box>
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(7, 1fr)"
+        border="1px solid #e8e8e8"
+        sx={{ height: innerHeight - navbarHeight - weekNameHeight }}
+      >
+        {Array.from({ length: calendarRowsNum * 7 }).map((_, i) => (
+          <Stack
+            sx={{
+              width: "100%",
+              flex: 1,
+              minWidth: 0,
+              height: (innerHeight - navbarHeight - weekNameHeight) / calendarRowsNum - 1,
+            }}
+            border="1px solid #e8e8e8"
+            key={crypto.randomUUID()}
+          >
+            {/* num of day and today badge */}
+            {isToday(calendarDays[i]) ? (
+              <Box textAlign="center" fontSize="sm">
+                <Chip label={calendarDays[i].day} />
+              </Box>
+            ) : (
+              <Box textAlign="center" fontSize="sm">
+                {calendarDays[i].day}
+              </Box>
+            )}
+            {/* event buttons */}
+            {calendarEvents
+              .filter((event: EventData) => event.start_date === toDateString(calendarDays[i]))
+              .map((event: EventData) => (
+                <Box
+                  sx={{
+                    maxWidth: "100%",
+                    cursor: "pointer",
+                    backgroundColor: userData.filter((data) => data.id === event.user_id)[0].color,
+                    color: "white",
+                    borderRadius: "4px",
+                    width: "97%",
+                    marginTop: "2px",
+                  }}
+                  onClick={() => {
+                    setEditFormData(event);
+                    onOpenEditForm();
+                  }}
+                  key={event.id}
                 >
-                  <VStack w="100%" spacing="0.5">
-                    {/* num of day and today badge */}
-                    <HStack>
-                      {isToday(calendarDays[i * 7 + j]) ? (
-                        <Badge colorScheme="red">{calendarDays[i * 7 + j].day}</Badge>
-                      ) : (
-                        <Box textAlign="center" fontSize="sm">
-                          {calendarDays[i * 7 + j].day}
-                        </Box>
-                      )}
-                    </HStack>
-
-                    {/* event buttons */}
-                    {calendarEvents
-                      .filter((event: EventData) => event.start_date === toDateString(calendarDays[i * 7 + j]))
-                      .map((event: EventData) => (
-                        <Box
-                          as="button"
-                          bg={userData.filter((data) => data.id === event.user_id)[0].color}
-                          color="white"
-                          fontSize={{ base: "12px", md: "sm" }}
-                          borderRadius="sm"
-                          w="97%"
-                          onClick={() => {
-                            setEditFormData(event);
-                            onOpenEditForm();
-                          }}
-                          key={event.id}
-                        >
-                          <Text noOfLines={2} lineHeight={1.25}>
-                            {event.is_timed ? `${event.start_time.slice(0, -3)} ` : ""}
-                            {event.content}
-                          </Text>
-                        </Box>
-                      ))}
-
-                    {/* add event trigger space */}
-                    <Box
-                      h="100%"
-                      w="100%"
-                      onClick={() => {
-                        setDefaultDate(
-                          DateTime.local(
-                            calendarDays[i * 7 + j].year,
-                            calendarDays[i * 7 + j].month,
-                            calendarDays[i * 7 + j].day,
-                          ),
-                        );
-                        onOpenAddForm();
-                      }}
-                    >
-                      {" "}
-                    </Box>
-                  </VStack>
-                </Flex>
+                  <Typography
+                    noWrap
+                    sx={{ fontSize: { xs: "12px", sm: "14px" }, overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {event.is_timed ? `${event.start_time.slice(0, -3)} ` : ""}
+                    {event.content}
+                  </Typography>
+                </Box>
               ))}
-          </Flex>
+
+            {/* add event trigger space */}
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+              }}
+              onClick={() => {
+                setDefaultDate(DateTime.local(calendarDays[i].year, calendarDays[i].month, calendarDays[i].day));
+                onOpenAddForm();
+              }}
+            >
+              {" "}
+            </Box>
+          </Stack>
         ))}
+      </Box>
+
       {editFormData !== undefined && userData !== undefined ? (
         <CalendarEditModal
           isOpenEditForm={isOpenEditForm}
@@ -157,7 +156,7 @@ const CalendarTable = ({
           mutateCreateEvent={mutateCreateEvent}
         />
       ) : undefined}
-    </Box>
+    </>
   );
 };
 

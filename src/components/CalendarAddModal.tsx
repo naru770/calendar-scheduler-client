@@ -1,27 +1,29 @@
-import { useState, useRef, useEffect } from "react";
-import type { UseMutateFunction } from "@tanstack/react-query";
-import type { DateTime } from "luxon";
 import {
+  Box,
   Button,
-  Flex,
-  Spacer,
-  VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   Checkbox,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalContent,
-  ModalCloseButton,
-  ModalFooter,
-  ModalOverlay,
-} from "@chakra-ui/react";
-import type { UserData, NewEventData } from "./Type";
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+} from "@mui/material";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import type { UseMutateFunction } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+import type { DateTime } from "luxon";
+import { useEffect, useId, useRef, useState } from "react";
 import { toDateString } from "./API";
-import { useToast } from "@chakra-ui/react";
+import * as Snackbar from "./Snackbar";
+import type { NewEventData, UserData } from "./Type";
 
 interface CalendarAddModalProps {
   isOpenAddForm: boolean;
@@ -46,10 +48,12 @@ const CalendarAddModal = ({
     is_timed: boolean;
   }
 
+  const openSnackbar = Snackbar.useStore((state) => state.open);
+
   const [form, setForm] = useState<Form>({
     date: toDateString(defaultDate),
     time: "00:00",
-    user: "",
+    user: userData[0]?.name ?? "",
     content: "",
     is_timed: false,
   });
@@ -58,11 +62,11 @@ const CalendarAddModal = ({
     setForm({
       date: toDateString(defaultDate),
       time: "00:00",
-      user: "",
+      user: userData[0]?.name ?? "",
       content: "",
       is_timed: false,
     });
-  }, [defaultDate]);
+  }, [defaultDate, userData]);
 
   const isReadyToSubmit = (): boolean => {
     return form.date !== "" && form.user !== "" && form.content !== "";
@@ -82,81 +86,87 @@ const CalendarAddModal = ({
     mutateCreateEvent(newData);
   };
 
-  const toast = useToast();
+  const useSelectLabelId = useId();
 
   return (
-    <Modal isOpen={isOpenAddForm} onClose={onCloseAddForm}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Add Event</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={4}>
+    <Dialog open={isOpenAddForm} onClose={onCloseAddForm} fullWidth maxWidth="sm">
+      <DialogTitle>Add Event</DialogTitle>
+      <DialogContent>
+        <Box sx={{ paddingTop: 2 }}>
+          <Stack spacing={4}>
             <FormControl>
-              <FormLabel>User</FormLabel>
-              <Select onChange={(e) => setForm({ ...form, user: e.target.value })}>
-                <option hidden>Select user</option>
+              <InputLabel id={useSelectLabelId}>User</InputLabel>
+              <Select
+                labelId={useSelectLabelId}
+                label="Select user"
+                defaultValue={userData[0]?.name ?? ""}
+                onChange={(e) => {
+                  if (typeof e.target.value !== "string") {
+                    return;
+                  }
+                  setForm({ ...form, user: e.target.value });
+                }}
+              >
                 {userData.map((data) => (
-                  <option key={data.id}>{data.name}</option>
+                  <MenuItem key={data.id} value={data.name}>
+                    {data.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
-
-            <FormControl>
-              <FormLabel htmlFor="changeform-datepicker">Date</FormLabel>
-              <input
-                id="changeform-datepicker"
-                type="date"
-                defaultValue={toDateString(defaultDate)}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
+            <LocalizationProvider dateAdapter={AdapterDayjs} dateFormats={{ year: "YYYY年" }}>
+              <DatePicker
+                label="Date"
+                format="YYYY-MM-DD"
+                value={dayjs(form.date)}
+                onChange={(pickerValue) => {
+                  const stringValue = pickerValue?.format("YYYY-MM-DD");
+                  if (stringValue) {
+                    setForm({ ...form, date: stringValue });
+                  }
+                }}
               />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel htmlFor="changeform-timepicker">
-                <Checkbox defaultChecked={false} onChange={(e) => setForm({ ...form, is_timed: e.target.checked })}>
-                  View Time
-                </Checkbox>
-              </FormLabel>
+            </LocalizationProvider>
+            <Box>
+              <FormControlLabel
+                control={<Checkbox onChange={(e) => setForm({ ...form, is_timed: e.target.checked })} />}
+                label="View Time"
+              />
               <input
-                id="changeform-timepicker"
                 type="time"
                 defaultValue={form.time}
                 onChange={(e) => setForm({ ...form, time: e.target.value })}
                 disabled={!form.is_timed}
               />
-            </FormControl>
+            </Box>
 
-            <FormControl>
-              <FormLabel>Content</FormLabel>
-              <Input ref={firstFieldRef} onChange={(e) => setForm({ ...form, content: e.target.value })} />
-            </FormControl>
-          </VStack>
-        </ModalBody>
-
-        <ModalFooter>
-          <Flex w="full">
-            <Spacer />
-            <Button
-              colorScheme={"blue"}
-              onClick={async () => {
-                await addButton();
-                toast({
-                  title: "Event added.",
-                  status: "success",
-                  duration: 3000,
-                  isClosable: true,
-                });
-                onCloseAddForm();
-              }}
-              disabled={!isReadyToSubmit()}
-            >
-              Add
-            </Button>
-          </Flex>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+            <TextField
+              label="Content"
+              ref={firstFieldRef}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+            />
+          </Stack>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="text" onClick={onCloseAddForm}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={async () => {
+            await addButton();
+            openSnackbar({
+              message: "Event Added",
+            });
+            onCloseAddForm();
+          }}
+          disabled={!isReadyToSubmit()}
+        >
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

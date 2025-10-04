@@ -1,23 +1,30 @@
-import { Flex, Box, Heading, Spacer, HStack } from "@chakra-ui/react";
+import { Box, Typography } from "@mui/material";
+import type { CSSProperties, ReactNode } from "react";
 
 interface NavbarProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  justifyContent: CSSProperties["justifyContent"];
 }
 
 export const navbarHeight = 55;
 
-export const Navbar = ({ children }: NavbarProps) => {
+export const Navbar = ({ children, justifyContent }: NavbarProps) => {
   return (
-    <Box boxShadow="md">
-      <Flex h={`${navbarHeight}px`} alignItems={"center"} justifyContent={"space-between"} backgroundColor="#f9f9f9">
-        <Box pl={4} display={{ base: "none", md: "block" }}>
-          <Heading size="md">Calendar</Heading>
+    <Box sx={{ boxShadow: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          height: `${navbarHeight}px`,
+          backgroundColor: "#f9f9f9",
+        }}
+      >
+        <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", paddingLeft: 4 }}>
+          <Typography variant="h6">Calendar</Typography>
         </Box>
-
-        <Spacer />
-
-        {children}
-      </Flex>
+        <Box sx={{ paddingX: { xs: 1, sm: 4 }, width: "100%", alignItems: "center", display: "flex", justifyContent }}>
+          {children}
+        </Box>
+      </Box>
     </Box>
   );
 };
