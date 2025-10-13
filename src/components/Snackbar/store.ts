@@ -7,7 +7,7 @@ type State = {
 };
 
 type Actions = {
-  open: (input: Partial<Omit<State, "open">>) => void;
+  open: (input: Pick<State, "message"> & Partial<Pick<State, "duration">>) => void;
   close: () => void;
 };
 
